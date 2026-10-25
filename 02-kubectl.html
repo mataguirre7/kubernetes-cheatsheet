@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Comandos de kubectl con buscador: cluster local, contextos, get, apply, logs, exec, port-forward, rollouts y Helm.">
+<meta name="theme-color" content="#326ce5">
+<title>Kubernetes · kubectl</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%8E%88%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/app.js"></script>
+</head>
+<body data-set="k8s" data-page="kubectl">
+<header class="topbar"></header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head"/></marker>
+  </defs>
+</svg>
+
+<main class="wrap">
+
+  <div class="hero">
+    <span class="eyebrow">Kubernetes · Cheatsheet 02</span>
+    <h1>kubectl</h1>
+    <p class="lead">La CLI para hablar con el cluster. Patrón general: <code>kubectl &lt;verbo&gt; &lt;tipo&gt; &lt;nombre&gt; [-n namespace] [flags]</code>. Los valores en <span style="color:#ff8fc8;font-family:var(--mono)">&lt;rosa&gt;</span> se reemplazan.</p>
+    <div class="toolbar">
+      <label class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="Buscar: logs, escalar, rollback, namespace, port-forward…" autocomplete="off" aria-label="Buscar comando">
+        <span class="hint"><kbd>/</kbd></span>
+      </label>
+    </div>
+    <nav class="toc">
+      <a href="#local">Cluster local</a>
+      <a href="#contexto">Contextos</a>
+      <a href="#ver">Ver recursos</a>
+      <a href="#aplicar">Crear y borrar</a>
+      <a href="#debug">Logs y debug</a>
+      <a href="#rollout">Escalar y actualizar</a>
+      <a href="#ns">Namespaces y labels</a>
+      <a href="#salida">Formatos de salida</a>
+      <a href="#extras">Atajos y Helm</a>
+    </nav>
+  </div>
+
+  <!-- ================= LOCAL ================= -->
+  <section class="block" id="local" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-comp)">1</div>
+      <div class="titles"><h2>Cluster local para practicar</h2><p>Elegí uno. En Windows lo más directo es el de Docker Desktop.</p></div>
+    </div>
+    <div class="grid cols-3">
+      <div class="card t-img">
+        <h3>Docker Desktop</h3>
+        <div class="cmd"><div class="what"><b>Settings → Kubernetes → Enable Kubernetes</b> → Apply. Instala <code>kubectl</code> y crea el contexto <code>docker-desktop</code>.</div></div>
+        <div class="cmd"><pre><code>kubectl config use-context docker-desktop</code></pre><div class="what">Apuntar kubectl a ese cluster.</div></div>
+        <div class="callout tip"><span class="ico">✓</span><p>Comparte las imágenes con tu Docker: lo que construís con <code>docker build</code> ya está disponible (usá <code>imagePullPolicy: IfNotPresent</code>).</p></div>
+      </div>
+      <div class="card t-cont">
+        <h3>minikube</h3>
+        <div class="cmd"><pre><code>minikube start
+minikube stop
+minikube delete</code></pre><div class="what">Crear / detener / borrar el cluster.</div></div>
+        <div class="cmd"><pre><code>minikube image load chanchito:1</code></pre><div class="what">Pasar una imagen local al cluster.</div></div>
+        <div class="cmd"><pre><code>minikube service chanchito</code></pre><div class="what">Abre en el navegador un Service NodePort.</div></div>
+        <div class="cmd"><pre><code>minikube dashboard
+minikube tunnel</code></pre><div class="what">Panel web · exponer Services <code>LoadBalancer</code> en tu PC.</div></div>
+      </div>
+      <div class="card t-net">
+        <h3>kind (Kubernetes in Docker)</h3>
+        <div class="cmd"><pre><code>kind create cluster --name dev
+kind delete cluster --name dev</code></pre><div class="what">Cluster dentro de contenedores Docker.</div></div>
+        <div class="cmd"><pre><code>kind load docker-image chanchito:1 --name dev</code></pre><div class="what">Cargar imagen local.</div></div>
+      </div>
+      <div class="card t-comp wide">
+        <h3>¿Funciona?</h3>
+        <div class="grid cols-3">
+          <div class="cmd"><pre><code>kubectl version</code></pre><div class="what">Versión del cliente y del servidor.</div></div>
+          <div class="cmd"><pre><code>kubectl cluster-info</code></pre><div class="what">Dirección del control plane.</div></div>
+          <div class="cmd"><pre><code>kubectl get nodes</code></pre><div class="what">Los nodos deben estar <b>Ready</b>.</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CONTEXTO ================= -->
+  <section class="block" id="contexto" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-file)">2</div>
+      <div class="titles"><h2>Contextos: a qué cluster estoy apuntando</h2><p>Un contexto = cluster + usuario + namespace por defecto. Viven en <code>~/.kube/config</code>.</p></div>
+    </div>
+    <div class="grid">
+      <div class="card t-file">
+        <h3>Ver y cambiar contexto</h3>
+        <div class="cmd"><pre><code>kubectl config get-contexts</code></pre><div class="what">Lista; el actual tiene <code>*</code>.</div></div>
+        <div class="cmd"><pre><code>kubectl config current-context</code></pre><div class="what">Solo el actual.</div></div>
+        <div class="cmd"><pre><code>kubectl config use-context &lt;contexto&gt;</code></pre><div class="what">Cambiar de cluster.</div></div>
+      </div>
+      <div class="card t-file">
+        <h3>Namespace por defecto</h3>
+        <div class="cmd"><pre><code>kubectl config set-context --current --namespace=&lt;ns&gt;</code></pre><div class="what">Evita escribir <code>-n</code> en cada comando.</div></div>
+        <div class="cmd"><pre><code>kubectl config view --minify</code></pre><div class="what">Config efectiva del contexto actual.</div></div>
+        <div class="callout warn"><span class="ico">!</span><p>Antes de borrar algo, <b>revisá el contexto</b>. Es el error clásico: ejecutar en producción creyendo que estás en local.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= VER ================= -->
+  <section class="block" id="ver" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-cont)">3</div>
+      <div class="titles"><h2>Ver recursos</h2><p><code>get</code> para listar, <code>describe</code> para el detalle con eventos.</p></div>
+    </div>
+    <div class="grid">
+      <div class="card t-cont">
+        <h3>Listar (get)</h3>
+        <div class="cmd"><pre><code>kubectl get pods</code></pre><div class="what">Pods del namespace actual (≈ <code>docker ps</code>).</div></div>
+        <div class="cmd"><pre><code>kubectl get pods -o wide</code></pre><div class="what">Con IP y nodo de cada Pod.</div></div>
+        <div class="cmd"><pre><code>kubectl get pods -A</code></pre><div class="what">De <b>todos</b> los namespaces.</div></div>
+        <div class="cmd"><pre><code>kubectl get pods -w</code></pre><div class="what">Watch: se queda mostrando los cambios.</div></div>
+        <div class="cmd"><pre><code>kubectl get all</code></pre><div class="what">Pods, Services, Deployments, ReplicaSets (no incluye ConfigMaps, Secrets ni PVC).</div></div>
+        <div class="cmd"><pre><code>kubectl get deploy,svc,pvc,cm,secret</code></pre><div class="what">Varios tipos a la vez.</div></div>
+      </div>
+      <div class="card t-cont">
+        <h3>Detalle (describe)</h3>
+        <div class="cmd"><pre><code>kubectl describe pod &lt;pod&gt;</code></pre><div class="what">Estado, contenedores, volúmenes y <b>Events</b> al final: ahí está el motivo de casi todo error.</div></div>
+        <div class="cmd"><pre><code>kubectl describe deploy chanchito
+kubectl describe svc chanchito</code></pre><div class="what">En un Service mirá <b>Endpoints</b>: si está vacío, el selector no encuentra Pods.</div></div>
+        <div class="cmd"><pre><code>kubectl get events --sort-by=.lastTimestamp</code></pre><div class="what">Eventos del namespace en orden.</div></div>
+        <div class="cmd"><pre><code>kubectl get deploy chanchito -o yaml</code></pre><div class="what">El objeto completo tal como lo guarda el cluster.</div></div>
+        <div class="cmd"><pre><code>kubectl explain deployment.spec.template.spec.containers</code></pre><div class="what">Documentación de cualquier campo del YAML.</div></div>
+        <div class="cmd"><pre><code>kubectl api-resources</code></pre><div class="what">Todos los tipos y sus nombres cortos.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= APLICAR ================= -->
+  <section class="block" id="aplicar" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-img)">4</div>
+      <div class="titles"><h2>Crear, actualizar y borrar</h2><p>Lo normal: escribir YAML y usar <code>apply</code>. Los comandos imperativos sirven para pruebas rápidas o para <b>generar</b> el YAML.</p></div>
+    </div>
+    <div class="grid">
+      <div class="card t-img">
+        <h3>Declarativo (apply)</h3>
+        <div class="cmd"><pre><code>kubectl apply -f deployment.yaml</code></pre><div class="what">Crea o actualiza lo que haya en el archivo. Se puede repetir sin miedo.</div></div>
+        <div class="cmd"><pre><code>kubectl apply -f k8s/</code></pre><div class="what">Todos los YAML de una carpeta (≈ <code>docker compose up</code>).</div></div>
+        <div class="cmd"><pre><code>kubectl diff -f k8s/</code></pre><div class="what">Qué cambiaría antes de aplicar.</div></div>
+        <div class="cmd"><pre><code>kubectl delete -f k8s/</code></pre><div class="what">Borra lo definido en esos archivos (≈ <code>compose down</code>).</div></div>
+        <div class="cmd"><pre><code>kubectl apply -k overlays/dev</code></pre><div class="what">Con Kustomize (variantes por entorno).</div></div>
+      </div>
+      <div class="card t-img">
+        <h3>Imperativo y generadores</h3>
+        <div class="cmd"><pre><code>kubectl create deployment chanchito --image=chanchito:1 --replicas=2</code></pre><div class="what">Crear un Deployment sin YAML.</div></div>
+        <div class="cmd"><pre><code>kubectl expose deployment chanchito --port=80 --target-port=3000</code></pre><div class="what">Crear su Service.</div></div>
+        <div class="cmd"><pre><code>kubectl create deployment chanchito --image=chanchito:1 \
+  --dry-run=client -o yaml &gt; deployment.yaml</code></pre><div class="what"><b>Truco</b>: genera el YAML base sin crear nada.</div></div>
+        <div class="cmd"><pre><code>kubectl run tmp --rm -it --image=busybox -- sh</code></pre><div class="what">Pod temporal para probar cosas desde adentro del cluster.</div></div>
+        <div class="cmd"><pre><code>kubectl edit deploy chanchito</code></pre><div class="what">Edita en vivo (abre el editor). Mejor cambiar el YAML y aplicar.</div></div>
+      </div>
+      <div class="card t-bad">
+        <h3>Borrar</h3>
+        <div class="cmd"><pre><code>kubectl delete pod &lt;pod&gt;</code></pre><div class="what">Si es de un Deployment, <b>se recrea</b> (sirve como “reiniciar”).</div></div>
+        <div class="cmd"><pre><code>kubectl delete deploy chanchito
+kubectl delete svc chanchito</code></pre><div class="what">Borrar por tipo y nombre.</div></div>
+        <div class="cmd"><pre><code>kubectl delete all -l app=chanchito</code></pre><div class="what">Todo lo que tenga ese label.</div></div>
+        <div class="cmd"><pre><code>kubectl delete pod &lt;pod&gt; --grace-period=0 --force</code></pre><div class="what">Forzar un Pod trabado en <i>Terminating</i>.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DEBUG ================= -->
+  <section class="block" id="debug" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-cont)">5</div>
+      <div class="titles"><h2>Logs, entrar al Pod y acceder desde tu PC</h2><p>Lo que más vas a usar para depurar.</p></div>
+    </div>
+    <div class="grid">
+      <div class="card t-cont">
+        <h3>Logs</h3>
+        <div class="cmd"><pre><code>kubectl logs &lt;pod&gt;</code></pre><div class="what">Salida del contenedor.</div></div>
+        <div class="cmd"><pre><code>kubectl logs -f &lt;pod&gt;</code></pre><div class="what">En vivo.</div></div>
+        <div class="cmd"><pre><code>kubectl logs deploy/chanchito</code></pre><div class="what">De un Pod del Deployment sin buscar el nombre.</div></div>
+        <div class="cmd"><pre><code>kubectl logs -l app=chanchito --tail=50</code></pre><div class="what">De todos los Pods con ese label.</div></div>
+        <div class="cmd"><pre><code>kubectl logs &lt;pod&gt; --previous</code></pre><div class="what">Del contenedor <b>anterior</b> que crasheó (clave en <i>CrashLoopBackOff</i>).</div></div>
+        <div class="cmd"><pre><code>kubectl logs &lt;pod&gt; -c &lt;contenedor&gt;</code></pre><div class="what">Si el Pod tiene varios contenedores.</div></div>
+      </div>
+      <div class="card t-cont">
+        <h3>Entrar y copiar</h3>
+        <div class="cmd"><pre><code>kubectl exec -it &lt;pod&gt; -- sh</code></pre><div class="what">Shell dentro del Pod. El <code>--</code> separa kubectl del comando.</div></div>
+        <div class="cmd"><pre><code>kubectl exec -it deploy/monguito -- mongosh -u mati -p &lt;password&gt;</code></pre><div class="what">Consola de Mongo.</div></div>
+        <div class="cmd"><pre><code>kubectl cp &lt;pod&gt;:/home/app/log.txt ./log.txt</code></pre><div class="what">Copiar archivos Pod ⇄ PC.</div></div>
+        <div class="cmd"><pre><code>kubectl top pods
+kubectl top nodes</code></pre><div class="what">CPU / RAM (requiere <i>metrics-server</i>).</div></div>
+      </div>
+      <div class="card t-net">
+        <h3>Acceder desde tu PC</h3>
+        <div class="cmd"><pre><code>kubectl port-forward svc/chanchito 3000:80</code></pre><div class="what"><code>localhost:3000</code> → puerto 80 del Service. Formato <b>LOCAL:REMOTO</b>, como <code>-p</code> de Docker.</div></div>
+        <div class="cmd"><pre><code>kubectl port-forward svc/monguito 27017:27017</code></pre><div class="what">Conectar Compass a la base del cluster.</div></div>
+        <div class="cmd"><pre><code>kubectl port-forward pod/&lt;pod&gt; 3000:3000</code></pre><div class="what">Directo a un Pod.</div></div>
+        <div class="callout info"><span class="ico">i</span><p>Queda corriendo en la terminal: <kbd>Ctrl</kbd>+<kbd>C</kbd> lo corta.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ROLLOUT ================= -->
+  <section class="block" id="rollout" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--ok)">6</div>
+      <div class="titles"><h2>Escalar, actualizar y volver atrás</h2><p>Un Deployment actualiza de a poco (rolling update): nunca te quedás sin Pods.</p></div>
+    </div>
+    <div class="diagram">
+      <h3>Rolling update de v1 a v2</h3>
+      <p><code>kubectl set image deployment/chanchito chanchito=chanchito:2</code> (o cambiar la imagen en el YAML y <code>apply</code>)</p>
+      <div class="svg-scroll">
+      <svg viewBox="0 0 1000 190" role="img" aria-label="Rolling update: se crea un Pod v2, se baja uno v1, y así hasta tener tres v2">
+        <g>
+          <text x="20" y="28" class="d-title">1 · inicio</text>
+          <rect x="20" y="46" width="46" height="46" rx="10" class="d-img"/><text x="43" y="74" text-anchor="middle" class="d-code" style="font-weight:700">v1</text>
+          <rect x="72" y="46" width="46" height="46" rx="10" class="d-img"/><text x="95" y="74" text-anchor="middle" class="d-code" style="font-weight:700">v1</text>
+          <rect x="124" y="46" width="46" height="46" rx="10" class="d-img"/><text x="147" y="74" text-anchor="middle" class="d-code" style="font-weight:700">v1</text>
+          <text x="20" y="122" class="d-sub">3/3 listos</text>
+        </g>
+        <path d="M222,69 L258,69" class="d-line" marker-end="url(#ah)"/>
+        <g>
+          <text x="270" y="28" class="d-title">2 · sube un v2</text>
+          <rect x="270" y="46" width="46" height="46" rx="10" class="d-img"/><text x="293" y="74" text-anchor="middle" class="d-code" style="font-weight:700">v1</text>
+          <rect x="322" y="46" width="46" height="46" rx="10" class="d-img"/><text x="345" y="74" text-anchor="middle" class="d-code" style="font-weight:700">v1</text>
+          <rect x="374" y="46" width="46" height="46" rx="10" class="d-img"/><text x="397" y="74" text-anchor="middle" class="d-code" style="font-weight:700">v1</text>
+          <rect x="426" y="46" width="46" height="46" rx="10" class="d-ok" style="stroke-dasharray:5 4"/><text x="449" y="74" text-anchor="middle" class="d-code" style="font-weight:700">v2</text>
+          <text x="270" y="122" class="d-sub">espera que v2 esté Ready</text>
+        </g>
+        <path d="M478,69 L514,69" class="d-line" marker-end="url(#ah)"/>
+        <g>
+          <text x="526" y="28" class="d-title">3 · baja un v1</text>
+          <rect x="526" y="46" width="46" height="46" rx="10" class="d-img"/><text x="549" y="74" text-anchor="middle" class="d-code" style="font-weight:700">v1</text>
+          <rect x="578" y="46" width="46" height="46" rx="10" class="d-bad" style="stroke-dasharray:5 4"/><text x="601" y="74" text-anchor="middle" class="d-code" style="font-weight:700">v1</text>
+          <rect x="630" y="46" width="46" height="46" rx="10" class="d-ok"/><text x="653" y="74" text-anchor="middle" class="d-code" style="font-weight:700">v2</text>
+          <rect x="682" y="46" width="46" height="46" rx="10" class="d-ok"/><text x="705" y="74" text-anchor="middle" class="d-code" style="font-weight:700">v2</text>
+          <text x="526" y="122" class="d-sub">y repite…</text>
+        </g>
+        <path d="M734,69 L770,69" class="d-line" marker-end="url(#ah)"/>
+        <g>
+          <text x="782" y="28" class="d-title">4 · listo</text>
+          <rect x="782" y="46" width="46" height="46" rx="10" class="d-ok"/><text x="805" y="74" text-anchor="middle" class="d-code" style="font-weight:700">v2</text>
+          <rect x="834" y="46" width="46" height="46" rx="10" class="d-ok"/><text x="857" y="74" text-anchor="middle" class="d-code" style="font-weight:700">v2</text>
+          <rect x="886" y="46" width="46" height="46" rx="10" class="d-ok"/><text x="909" y="74" text-anchor="middle" class="d-code" style="font-weight:700">v2</text>
+          <text x="782" y="122" class="d-sub">3/3 listos · sin corte</text>
+        </g>
+        <text x="500" y="168" text-anchor="middle" class="d-lbl">cada versión es un ReplicaSet nuevo → por eso existe “rollout undo”</text>
+      </svg>
+      </div>
+      <div class="legend">
+        <span class="t-img"><i></i>v1 corriendo</span>
+        <span class="t-ok"><i></i>v2</span>
+        <span class="t-bad"><i></i>terminando</span>
+      </div>
+    </div>
+    <div class="grid" style="margin-top:16px">
+      <div class="card t-ok">
+        <h3>Escalar</h3>
+        <div class="cmd"><pre><code>kubectl scale deploy chanchito --replicas=5</code></pre><div class="what">Cambia la cantidad de Pods.</div></div>
+        <div class="cmd"><pre><code>kubectl autoscale deploy chanchito --min=2 --max=6 --cpu-percent=70</code></pre><div class="what">Crea un HorizontalPodAutoscaler (requiere metrics-server).</div></div>
+        <div class="cmd"><pre><code>kubectl get hpa</code></pre><div class="what">Ver el autoscaler.</div></div>
+      </div>
+      <div class="card t-ok">
+        <h3>Actualizar y rollback</h3>
+        <div class="cmd"><pre><code>kubectl set image deployment/chanchito chanchito=chanchito:2</code></pre><div class="what">Nueva imagen (<code>contenedor=imagen</code>).</div></div>
+        <div class="cmd"><pre><code>kubectl rollout status deploy/chanchito</code></pre><div class="what">Seguir el progreso.</div></div>
+        <div class="cmd"><pre><code>kubectl rollout history deploy/chanchito</code></pre><div class="what">Revisiones anteriores.</div></div>
+        <div class="cmd"><pre><code>kubectl rollout undo deploy/chanchito
+kubectl rollout undo deploy/chanchito --to-revision=2</code></pre><div class="what">Volver a la versión anterior (o a una específica).</div></div>
+        <div class="cmd"><pre><code>kubectl rollout restart deploy/chanchito</code></pre><div class="what">Recrear todos los Pods (ej. tras cambiar un ConfigMap).</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= NS ================= -->
+  <section class="block" id="ns" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-comp)">7</div>
+      <div class="titles"><h2>Namespaces y labels</h2><p>Organizar y filtrar.</p></div>
+    </div>
+    <div class="grid">
+      <div class="card t-comp">
+        <h3>Namespaces</h3>
+        <div class="cmd"><pre><code>kubectl get ns</code></pre><div class="what">Listar. Vienen <code>default</code>, <code>kube-system</code>, <code>kube-public</code>…</div></div>
+        <div class="cmd"><pre><code>kubectl create ns chanchito-dev</code></pre><div class="what">Crear.</div></div>
+        <div class="cmd"><pre><code>kubectl get pods -n chanchito-dev
+kubectl apply -f k8s/ -n chanchito-dev</code></pre><div class="what"><code>-n</code> en cualquier comando.</div></div>
+        <div class="cmd"><pre><code>kubectl delete ns chanchito-dev</code></pre><div class="what">⚠ Borra <b>todo</b> lo que hay adentro.</div></div>
+      </div>
+      <div class="card t-comp">
+        <h3>Labels</h3>
+        <div class="cmd"><pre><code>kubectl get pods --show-labels</code></pre><div class="what">Ver labels.</div></div>
+        <div class="cmd"><pre><code>kubectl get pods -l app=chanchito
+kubectl get pods -l 'env in (dev,qa)'</code></pre><div class="what">Filtrar por label (selector).</div></div>
+        <div class="cmd"><pre><code>kubectl label pod &lt;pod&gt; env=dev
+kubectl label pod &lt;pod&gt; env-</code></pre><div class="what">Agregar / quitar (con <code>-</code> al final).</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SALIDA ================= -->
+  <section class="block" id="salida" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-file)">8</div>
+      <div class="titles"><h2>Formatos de salida</h2><p>Flag <code>-o</code> en cualquier <code>get</code>.</p></div>
+    </div>
+    <div class="card t-file wide">
+      <h3>Tabla de -o</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Flag</th><th>Qué muestra</th><th>Ejemplo</th></tr></thead>
+          <tbody>
+            <tr><td><code>-o wide</code></td><td>Columnas extra (IP, nodo, imagen)</td><td><code>kubectl get pods -o wide</code></td></tr>
+            <tr><td><code>-o yaml</code> / <code>-o json</code></td><td>El objeto completo</td><td><code>kubectl get svc chanchito -o yaml</code></td></tr>
+            <tr><td><code>-o name</code></td><td>Solo <code>tipo/nombre</code> (para scripts)</td><td><code>kubectl get pods -o name</code></td></tr>
+            <tr><td><code>-o jsonpath</code></td><td>Un campo puntual</td><td><code>kubectl get pod &lt;pod&gt; -o jsonpath='{.status.podIP}'</code></td></tr>
+            <tr><td><code>-o custom-columns</code></td><td>Tus propias columnas</td><td><code>-o custom-columns=NOMBRE:.metadata.name,IMG:.spec.containers[0].image</code></td></tr>
+            <tr><td><code>--sort-by</code></td><td>Ordenar</td><td><code>kubectl get pods --sort-by=.status.startTime</code></td></tr>
+            <tr><td><code>-w</code></td><td>Seguir mostrando cambios</td><td><code>kubectl get pods -w</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout info"><span class="ico">i</span><p>Secret decodificado (PowerShell): <code>kubectl get secret mongo-secret -o jsonpath='{.data.MONGO_PASSWORD}'</code> y después <code>[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("&lt;valor&gt;"))</code>.</p></div>
+    </div>
+  </section>
+
+  <!-- ================= EXTRAS ================= -->
+  <section class="block" id="extras" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-img)">9</div>
+      <div class="titles"><h2>Atajos y Helm</h2><p>Para escribir menos.</p></div>
+    </div>
+    <div class="grid">
+      <div class="card t-img">
+        <h3>Alias y autocompletado</h3>
+        <div class="cmd"><pre><code># PowerShell ($PROFILE)
+Set-Alias k kubectl
+kubectl completion powershell | Out-String | Invoke-Expression</code></pre><div class="what">Después: <code>k get po</code>, con Tab para completar.</div></div>
+        <div class="cmd"><pre><code># Bash / Git Bash (~/.bashrc)
+alias k=kubectl
+source &lt;(kubectl completion bash)</code></pre><div class="what">Lo mismo en Bash.</div></div>
+        <div class="cmd"><div class="what">Nombres cortos: <code>po</code> pods · <code>deploy</code> · <code>svc</code> · <code>ns</code> · <code>cm</code> · <code>pvc</code> · <code>ing</code> · <code>sts</code> · <code>no</code> nodes.</div></div>
+      </div>
+      <div class="card t-img">
+        <h3>Helm (gestor de paquetes)</h3>
+        <div class="cmd"><pre><code>helm repo add traefik https://traefik.github.io/charts
+helm repo update</code></pre><div class="what">Agregar un repositorio de charts.</div></div>
+        <div class="cmd"><pre><code>helm install traefik traefik/traefik -n traefik --create-namespace</code></pre><div class="what">Instalar una app empaquetada (un “chart”). Traefik sirve como Ingress controller.</div></div>
+        <div class="cmd"><pre><code>helm list -A
+helm upgrade traefik traefik/traefik -n traefik -f values.yaml
+helm uninstall traefik -n traefik</code></pre><div class="what">Listar · actualizar con tus valores · desinstalar.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <p class="empty">No hay comandos que coincidan con la búsqueda.</p>
+
+  <footer class="foot">
+    <a href="01-conceptos.html">← Conceptos</a>
+    <a href="03-manifiestos.html">Siguiente: Manifiestos YAML →</a>
+  </footer>
+</main>
+</body>
+</html>

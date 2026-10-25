@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Cheatsheets visuales de Kubernetes en español: conceptos, kubectl, manifiestos YAML y solución de problemas.">
+<meta name="theme-color" content="#326ce5">
+<title>Kubernetes Cheatsheets</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%8E%88%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/app.js"></script>
+</head>
+<body data-set="k8s" data-page="inicio">
+<header class="topbar"></header>
+
+<main class="wrap">
+
+  <div class="hero">
+    <span class="eyebrow">Referencia personal</span>
+    <h1>Kubernetes Cheatsheets</h1>
+    <p class="lead">Conceptos, <code>kubectl</code>, manifiestos y diagnóstico, con tu app <code>chanchito</code> + <code>monguito</code> como ejemplo. Si venís de Docker, empezá por <a href="05-de-compose-a-k8s.html">De Compose a K8s</a>.</p>
+    <div class="toolbar">
+      <label class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="Quiero… ver logs, escalar, rollback, entrar al pod…" autocomplete="off" aria-label="Buscar qué querés hacer">
+        <span class="hint"><kbd>/</kbd></span>
+      </label>
+    </div>
+  </div>
+
+  <!-- ================= HOJAS ================= -->
+  <section class="block">
+    <div class="grid cols-3">
+      <a class="card sheet-card t-comp" href="01-conceptos.html">
+        <div class="top">
+          <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg></div>
+          <div><span class="tag">01</span><h3>Conceptos</h3></div>
+        </div>
+        <p>Arquitectura del cluster, estado deseado, Deployment → Pod, glosario y equivalencias con Docker.</p>
+        <div class="chips"><span>control plane</span><span>Pod</span><span>Deployment</span><span>Service</span></div>
+      </a>
+      <a class="card sheet-card t-cont" href="02-kubectl.html">
+        <div class="top">
+          <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 17 6-6-6-6"/><path d="M12 19h8"/></svg></div>
+          <div><span class="tag">02</span><h3>kubectl</h3></div>
+        </div>
+        <p>Cluster local, contextos, get/describe, apply, logs, exec, port-forward, rollouts. Con buscador.</p>
+        <div class="chips"><span>get pods</span><span>apply -f</span><span>logs -f</span><span>rollout undo</span></div>
+      </a>
+      <a class="card sheet-card t-file" href="03-manifiestos.html">
+        <div class="top">
+          <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/></svg></div>
+          <div><span class="tag">03</span><h3>Manifiestos YAML</h3></div>
+        </div>
+        <p>Anatomía, labels y selectors, y plantillas de Deployment, Service, ConfigMap, Secret, PVC e Ingress.</p>
+        <div class="chips"><span>apiVersion</span><span>selector</span><span>probes</span><span>resources</span></div>
+      </a>
+      <a class="card sheet-card t-net" href="04-red-config-datos.html">
+        <div class="top">
+          <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5v4M12 11.5 6.5 17M12 11.5l5.5 5.5"/></svg></div>
+          <div><span class="tag">04</span><h3>Red, config y datos</h3></div>
+        </div>
+        <p>Tipos de Service y puertos, DNS, Ingress, cómo inyectar ConfigMaps/Secrets, PVC y StatefulSet.</p>
+        <div class="chips"><span>NodePort</span><span>targetPort</span><span>envFrom</span><span>PVC</span></div>
+      </a>
+      <a class="card sheet-card t-img" href="05-de-compose-a-k8s.html">
+        <div class="top">
+          <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></div>
+          <div><span class="tag">05</span><h3>De Compose a K8s</h3></div>
+        </div>
+        <p>Tu <code>pruebas-docker</code> migrado: mapa línea por línea, pasos y manifiestos completos.</p>
+        <div class="chips"><span>chanchito</span><span>monguito</span><span>k8s/</span></div>
+      </a>
+      <a class="card sheet-card t-bad" href="06-problemas.html">
+        <div class="top">
+          <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div>
+          <div><span class="tag">06</span><h3>Problemas comunes</h3></div>
+        </div>
+        <p>CrashLoopBackOff, ImagePullBackOff, Pending, endpoints vacíos… con causa y solución.</p>
+        <div class="chips"><span>describe</span><span>logs --previous</span><span>endpoints</span></div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ================= QUIERO ================= -->
+  <section class="block" id="quiero" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-comp)">?</div>
+      <div class="titles"><h2>Quiero…</h2><p>Lo que querés hacer → el comando.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card t-cont">
+        <h3>Ver y depurar</h3>
+        <div class="want">
+          <div class="want-row"><div class="q">Ver los Pods<small>listar, ps, estado</small></div><pre><code>kubectl get pods -o wide</code></pre></div>
+          <div class="want-row"><div class="q">Ver todo lo del namespace<small>listar recursos, all</small></div><pre><code>kubectl get all</code></pre></div>
+          <div class="want-row"><div class="q">Saber por qué falla un Pod<small>describe, eventos, error</small></div><pre><code>kubectl describe pod &lt;pod&gt;</code></pre></div>
+          <div class="want-row"><div class="q">Ver logs en vivo<small>logs, follow, consola</small></div><pre><code>kubectl logs -f deploy/chanchito</code></pre></div>
+          <div class="want-row"><div class="q">Logs del intento que crasheó<small>crashloop, previous</small></div><pre><code>kubectl logs &lt;pod&gt; --previous</code></pre></div>
+          <div class="want-row"><div class="q">Entrar al Pod<small>exec, shell, terminal</small></div><pre><code>kubectl exec -it deploy/chanchito -- sh</code></pre></div>
+          <div class="want-row"><div class="q">Abrirlo desde mi PC<small>port-forward, localhost, acceder</small></div><pre><code>kubectl port-forward svc/chanchito 3000:80</code></pre></div>
+          <div class="want-row"><div class="q">Ver los eventos recientes<small>events, historial</small></div><pre><code>kubectl get events --sort-by=.lastTimestamp</code></pre></div>
+        </div>
+      </div>
+
+      <div class="card t-img">
+        <h3>Desplegar y actualizar</h3>
+        <div class="want">
+          <div class="want-row"><div class="q">Aplicar mis YAML<small>apply, desplegar, compose up</small></div><pre><code>kubectl apply -f k8s/</code></pre></div>
+          <div class="want-row"><div class="q">Generar un YAML base<small>dry-run, plantilla</small></div><pre><code>kubectl create deployment x --image=x:1 --dry-run=client -o yaml</code></pre></div>
+          <div class="want-row"><div class="q">Escalar réplicas<small>scale, más pods</small></div><pre><code>kubectl scale deploy chanchito --replicas=3</code></pre></div>
+          <div class="want-row"><div class="q">Cambiar la imagen<small>set image, nueva versión, update</small></div><pre><code>kubectl set image deployment/chanchito chanchito=chanchito:2</code></pre></div>
+          <div class="want-row"><div class="q">Volver a la versión anterior<small>rollback, undo</small></div><pre><code>kubectl rollout undo deploy/chanchito</code></pre></div>
+          <div class="want-row"><div class="q">Reiniciar los Pods<small>restart, recargar config</small></div><pre><code>kubectl rollout restart deploy/chanchito</code></pre></div>
+          <div class="want-row"><div class="q">Borrar todo lo aplicado<small>delete, bajar, compose down</small></div><pre><code>kubectl delete -f k8s/</code></pre></div>
+        </div>
+      </div>
+
+      <div class="card t-file">
+        <h3>Cluster y configuración</h3>
+        <div class="want">
+          <div class="want-row"><div class="q">¿A qué cluster apunto?<small>contexto, context</small></div><pre><code>kubectl config current-context</code></pre></div>
+          <div class="want-row"><div class="q">Cambiar de cluster<small>use-context</small></div><pre><code>kubectl config use-context docker-desktop</code></pre></div>
+          <div class="want-row"><div class="q">Cambiar namespace por defecto<small>namespace, -n</small></div><pre><code>kubectl config set-context --current --namespace=&lt;ns&gt;</code></pre></div>
+          <div class="want-row"><div class="q">Crear un Secret<small>contraseña, password</small></div><pre><code>kubectl create secret generic mongo-secret --from-literal=KEY=valor</code></pre></div>
+          <div class="want-row"><div class="q">Usar mi imagen local<small>minikube, kind, image load</small></div><pre><code>minikube image load chanchito:1</code></pre></div>
+        </div>
+      </div>
+
+      <div class="card t-net">
+        <h3>Red y datos</h3>
+        <div class="want">
+          <div class="want-row"><div class="q">¿El Service encuentra Pods?<small>endpoints, selector, no responde</small></div><pre><code>kubectl get endpoints chanchito</code></pre></div>
+          <div class="want-row"><div class="q">Probar DNS desde adentro<small>nslookup, busybox</small></div><pre><code>kubectl run tmp --rm -it --image=busybox -- nslookup monguito</code></pre></div>
+          <div class="want-row"><div class="q">Conectar Compass a Mongo<small>mongo, base de datos</small></div><pre><code>kubectl port-forward svc/monguito 27017:27017</code></pre></div>
+          <div class="want-row"><div class="q">Ver discos<small>pvc, volumen, storage</small></div><pre><code>kubectl get pvc,pv</code></pre></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DESCARGAS ================= -->
+  <section class="block" id="descargas">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--ok)">↓</div>
+      <div class="titles"><h2>Descargar como imagen</h2><p>Cada hoja completa en PNG, para tenerla offline o imprimirla.</p></div>
+    </div>
+    <div class="card t-ok wide">
+      <h3>PNG por hoja</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Hoja</th><th>Tema oscuro</th><th>Tema claro</th></tr></thead>
+          <tbody>
+            <tr><td>Inicio</td><td><a href="img/index-dark.png" download>index-dark.png</a></td><td><a href="img/index-light.png" download>index-light.png</a></td></tr>
+            <tr><td>01 · Conceptos</td><td><a href="img/01-conceptos-dark.png" download>01-conceptos-dark.png</a></td><td><a href="img/01-conceptos-light.png" download>01-conceptos-light.png</a></td></tr>
+            <tr><td>02 · kubectl</td><td><a href="img/02-kubectl-dark.png" download>02-kubectl-dark.png</a></td><td><a href="img/02-kubectl-light.png" download>02-kubectl-light.png</a></td></tr>
+            <tr><td>03 · Manifiestos YAML</td><td><a href="img/03-manifiestos-dark.png" download>03-manifiestos-dark.png</a></td><td><a href="img/03-manifiestos-light.png" download>03-manifiestos-light.png</a></td></tr>
+            <tr><td>04 · Red, config y datos</td><td><a href="img/04-red-config-datos-dark.png" download>04-red-config-datos-dark.png</a></td><td><a href="img/04-red-config-datos-light.png" download>04-red-config-datos-light.png</a></td></tr>
+            <tr><td>05 · De Compose a K8s</td><td><a href="img/05-de-compose-a-k8s-dark.png" download>05-de-compose-a-k8s-dark.png</a></td><td><a href="img/05-de-compose-a-k8s-light.png" download>05-de-compose-a-k8s-light.png</a></td></tr>
+            <tr><td>06 · Problemas comunes</td><td><a href="img/06-problemas-dark.png" download>06-problemas-dark.png</a></td><td><a href="img/06-problemas-light.png" download>06-problemas-light.png</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <p class="empty">Nada por acá. Probá en <a href="02-kubectl.html">kubectl</a> o en <a href="06-problemas.html">Problemas comunes</a>.</p>
+
+  <footer class="foot">
+    <span>Kubernetes Cheatsheets · ejemplos basados en <code>pruebas-docker</code></span>
+    <a href="01-conceptos.html">Empezar por Conceptos →</a>
+  </footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Errores comunes de Kubernetes: CrashLoopBackOff, ImagePullBackOff, Pending, Services sin endpoints y más.">
+<meta name="theme-color" content="#326ce5">
+<title>Kubernetes · Problemas comunes</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%8E%88%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/app.js"></script>
+<style>
+  .fix dt { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-top: 10px; }
+  .fix dd { margin: 3px 0 0; font-size: 14px; }
+  .fix dd pre { margin-top: 6px; }
+  .err pre { background: color-mix(in srgb, var(--bad) 12%, var(--surface)); color: var(--bad); border-color: color-mix(in srgb, var(--bad) 35%, transparent); }
+  .err pre .copy { display: none; }
+</style>
+</head>
+<body data-set="k8s" data-page="problemas">
+<header class="topbar"></header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head"/></marker>
+  </defs>
+</svg>
+
+<main class="wrap">
+
+  <div class="hero">
+    <span class="eyebrow">Kubernetes · Cheatsheet 06</span>
+    <h1>Problemas comunes</h1>
+    <p class="lead">Buscá por el STATUS del Pod o por el texto del error. Cada tarjeta: <b>qué ves</b> → <b>por qué pasa</b> → <b>cómo se arregla</b>.</p>
+    <div class="toolbar">
+      <label class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="CrashLoopBackOff, ImagePullBackOff, Pending, endpoints…" autocomplete="off" aria-label="Buscar problema">
+        <span class="hint"><kbd>/</kbd></span>
+      </label>
+    </div>
+    <nav class="toc">
+      <a href="#diagnostico">Cómo diagnosticar</a>
+      <a href="#pods">Estado del Pod</a>
+      <a href="#red">Red y Services</a>
+      <a href="#kubectl">kubectl y YAML</a>
+      <a href="#datos">Config y datos</a>
+    </nav>
+  </div>
+
+  <!-- ================= DIAGNOSTICO ================= -->
+  <section class="block" id="diagnostico">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-comp)">0</div>
+      <div class="titles"><h2>El camino de diagnóstico</h2><p>Casi todo se resuelve con estos 3 comandos, en este orden.</p></div>
+    </div>
+    <div class="diagram">
+      <div class="svg-scroll">
+      <svg viewBox="0 0 1000 210" role="img" aria-label="Según el estado del Pod: describe para Pending o errores de imagen, logs --previous para CrashLoopBackOff, endpoints y port-forward si corre pero no responde">
+        <rect x="20" y="80" width="170" height="52" rx="12" class="d-plain"/>
+        <text x="105" y="104" text-anchor="middle" class="d-code" style="font-weight:700">kubectl get pods</text>
+        <text x="105" y="122" text-anchor="middle" class="d-lbl">mirá STATUS</text>
+        <path d="M190,106 L236,106" class="d-line" marker-end="url(#ah)"/>
+
+        <path d="M300,56 L360,106 L300,156 L240,106 z" class="d-comp"/>
+        <text x="300" y="104" text-anchor="middle" class="d-title" style="font-size:13.5px">¿STATUS?</text>
+        <text x="300" y="122" text-anchor="middle" class="d-lbl">READY</text>
+
+        <rect x="430" y="14" width="550" height="52" rx="12" class="d-vol"/>
+        <text x="446" y="36" class="d-sub">Pending · ImagePullBackOff · ContainerCreating · CreateContainerConfigError</text>
+        <text x="446" y="56" class="d-code" style="font-weight:700">kubectl describe pod &lt;pod&gt;   → leé “Events” al final</text>
+
+        <rect x="430" y="80" width="550" height="52" rx="12" class="d-bad"/>
+        <text x="446" y="102" class="d-sub">CrashLoopBackOff · Error · OOMKilled</text>
+        <text x="446" y="122" class="d-code" style="font-weight:700">kubectl logs &lt;pod&gt; --previous   → el error de tu app</text>
+
+        <rect x="430" y="146" width="550" height="52" rx="12" class="d-net" style="stroke-dasharray:none"/>
+        <text x="446" y="168" class="d-sub">Running 1/1 pero no responde</text>
+        <text x="446" y="188" class="d-code" style="font-weight:700">kubectl get endpoints &lt;svc&gt; · port-forward al Pod</text>
+
+        <path d="M340,90 C385,60 395,40 426,40" class="d-line s-vol" marker-end="url(#ah)"/>
+        <path d="M360,106 L426,106" class="d-line s-bad" marker-end="url(#ah)"/>
+        <path d="M340,122 C385,152 395,172 426,172" class="d-line s-net" marker-end="url(#ah)"/>
+      </svg>
+      </div>
+      <div class="callout tip"><span class="ico">✓</span><p>Y para el namespace entero: <code>kubectl get events --sort-by=.lastTimestamp</code>.</p></div>
+    </div>
+  </section>
+
+  <!-- ================= PODS ================= -->
+  <section class="block" id="pods" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--bad)">1</div>
+      <div class="titles"><h2>Estado del Pod</h2></div>
+    </div>
+    <div class="grid">
+      <div class="card t-bad">
+        <h3>ImagePullBackOff / ErrImagePull</h3>
+        <div class="err"><pre><code data-lang="plain">Failed to pull image "chanchito:latest": pull access denied, repository does not exist</code></pre></div>
+        <dl class="fix">
+          <dt>Causa</dt><dd>La imagen no existe en el registry, el tag está mal, es privada, o es una imagen <b>local</b> y Kubernetes intenta bajarla de Docker Hub (pasa siempre con <code>:latest</code>).</dd>
+          <dt>Solución</dt>
+          <dd>Tag fijo + <code>imagePullPolicy: IfNotPresent</code>, y que la imagen esté en el nodo:
+            <pre><code>docker build -t chanchito:1 .
+# minikube / kind:
+minikube image load chanchito:1
+kind load docker-image chanchito:1</code></pre>Imagen privada: <code>imagePullSecrets</code> con un Secret <code>docker-registry</code>.</dd>
+        </dl>
+      </div>
+
+      <div class="card t-bad">
+        <h3>CrashLoopBackOff</h3>
+        <div class="err"><pre><code data-lang="plain">chanchito-7d9f8-x2k4   0/1   CrashLoopBackOff   5 (32s ago)</code></pre></div>
+        <dl class="fix">
+          <dt>Causa</dt><dd>El contenedor arranca y se cae una y otra vez: error en la app, variable faltante, no conecta a la DB, comando mal, o una <code>livenessProbe</code> que la mata.</dd>
+          <dt>Solución</dt>
+          <dd><pre><code># log del intento que murió
+kubectl logs &lt;pod&gt; --previous
+# Last State, Exit Code, probes
+kubectl describe pod &lt;pod&gt;</code></pre></dd>
+        </dl>
+      </div>
+
+      <div class="card t-bad">
+        <h3>Pending</h3>
+        <div class="err"><pre><code data-lang="plain">0/1 nodes are available: 1 Insufficient memory.</code></pre></div>
+        <dl class="fix">
+          <dt>Causa</dt><dd>El scheduler no encuentra un nodo: <code>requests</code> demasiado altos, PVC sin enlazar (<code>unbound PersistentVolumeClaims</code>) o taints en los nodos.</dd>
+          <dt>Solución</dt>
+          <dd>Leé el evento en <code>kubectl describe pod</code>. Bajá <code>requests</code>, dale más RAM a Docker Desktop, o revisá <code>kubectl get pvc</code> (tiene que estar <b>Bound</b>).</dd>
+        </dl>
+      </div>
+
+      <div class="card t-bad">
+        <h3>CreateContainerConfigError</h3>
+        <div class="err"><pre><code data-lang="plain">Error: secret "mongo-secret" not found</code></pre></div>
+        <dl class="fix">
+          <dt>Causa</dt><dd>El Pod referencia un Secret/ConfigMap (o una <b>clave</b> dentro) que no existe en <b>ese namespace</b>.</dd>
+          <dt>Solución</dt>
+          <dd><pre><code>kubectl get secret,cm
+kubectl describe secret mongo-secret</code></pre>Crealo antes o corregí el nombre/clave. El Pod arranca solo cuando aparece.</dd>
+        </dl>
+      </div>
+
+      <div class="card t-bad">
+        <h3>OOMKilled (exit code 137)</h3>
+        <div class="err"><pre><code data-lang="plain">Last State: Terminated   Reason: OOMKilled   Exit Code: 137</code></pre></div>
+        <dl class="fix">
+          <dt>Causa</dt><dd>El contenedor superó <code>limits.memory</code>.</dd>
+          <dt>Solución</dt><dd>Subí el límite (ej. <code>512Mi</code>) o reducí el consumo. Mirá el uso real con <code>kubectl top pod</code>.</dd>
+        </dl>
+      </div>
+
+      <div class="card t-warn">
+        <h3>Running pero 0/1 READY</h3>
+        <dl class="fix">
+          <dt>Causa</dt><dd>La <code>readinessProbe</code> falla: path o puerto incorrecto, o la app tarda más que <code>initialDelaySeconds</code>. Mientras tanto el Service no le manda tráfico.</dd>
+          <dt>Solución</dt><dd><code>kubectl describe pod</code> → “Readiness probe failed: …”. Corregí path/puerto o aumentá el delay.</dd>
+        </dl>
+      </div>
+
+      <div class="card t-warn">
+        <h3>Borro un Pod y vuelve a aparecer</h3>
+        <dl class="fix">
+          <dt>Causa</dt><dd>Es de un Deployment: el estado deseado dice N réplicas y el controller lo recrea. No es un error.</dd>
+          <dt>Solución</dt><dd><pre><code># apagar sin borrar
+kubectl scale deploy chanchito --replicas=0
+# borrar de verdad
+kubectl delete deploy chanchito</code></pre></dd>
+        </dl>
+      </div>
+
+      <div class="card t-warn">
+        <h3>Pod trabado en Terminating</h3>
+        <dl class="fix">
+          <dt>Causa</dt><dd>El proceso no responde a SIGTERM, el nodo se perdió, o un finalizer bloquea.</dd>
+          <dt>Solución</dt><dd><pre><code>kubectl delete pod &lt;pod&gt; --grace-period=0 --force</code></pre></dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= RED ================= -->
+  <section class="block" id="red" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-net)">2</div>
+      <div class="titles"><h2>Red y Services</h2></div>
+    </div>
+    <div class="grid">
+      <div class="card t-bad">
+        <h3>El Service no responde (endpoints vacíos)</h3>
+        <div class="err"><pre><code data-lang="plain">kubectl get endpoints chanchito
+NAME        ENDPOINTS   AGE
+chanchito   &lt;none&gt;      5m</code></pre></div>
+        <dl class="fix">
+          <dt>Causa</dt><dd>El <code>selector</code> del Service no coincide con los <code>labels</code> de los Pods, o los Pods no están Ready.</dd>
+          <dt>Solución</dt><dd><pre><code>kubectl get pods --show-labels
+kubectl describe svc chanchito</code></pre>Compará los labels con el campo <b>Selector</b>.Ver <a href="03-manifiestos.html#labels">diagrama de labels</a>.</dd>
+        </dl>
+      </div>
+
+      <div class="card t-bad">
+        <h3>connection refused a través del Service</h3>
+        <dl class="fix">
+          <dt>Causa</dt><dd>Hay endpoints pero <code>targetPort</code> no es el puerto donde escucha la app (ej. 80 en vez de 3000), o la app escucha solo en <code>127.0.0.1</code>.</dd>
+          <dt>Solución</dt><dd><code>targetPort</code> = <code>containerPort</code> = puerto real. La app debe escuchar en <code>0.0.0.0</code>. Probá directo: <code>kubectl port-forward pod/&lt;pod&gt; 3000:3000</code>.</dd>
+        </dl>
+      </div>
+
+      <div class="card t-bad">
+        <h3>ENOTFOUND monguito</h3>
+        <div class="err"><pre><code data-lang="plain">getaddrinfo ENOTFOUND monguito</code></pre></div>
+        <dl class="fix">
+          <dt>Causa</dt><dd>No existe un <b>Service</b> llamado así en el mismo namespace (el nombre del Deployment o del Pod no sirve como host).</dd>
+          <dt>Solución</dt><dd><pre><code>kubectl get svc
+kubectl run tmp --rm -it --image=busybox -- nslookup monguito</code></pre>Si está en otro namespace: <code>monguito.&lt;namespace&gt;</code>.</dd>
+        </dl>
+      </div>
+
+      <div class="card t-warn">
+        <h3>localhost:30080 no abre</h3>
+        <dl class="fix">
+          <dt>Causa</dt><dd>Depende del cluster: Docker Desktop publica NodePorts en <code>localhost</code>; minikube y kind <b>no</b>.</dd>
+          <dt>Solución</dt><dd><pre><code>minikube service chanchito --url
+# funciona en todos:
+kubectl port-forward svc/chanchito 3000:80</code></pre></dd>
+        </dl>
+      </div>
+
+      <div class="card t-warn">
+        <h3>nodePort fuera de rango</h3>
+        <div class="err"><pre><code data-lang="plain">spec.ports[0].nodePort: Invalid value: 3000: provided port is not in the valid range. The range of valid ports is 30000-32767</code></pre></div>
+        <dl class="fix">
+          <dt>Solución</dt><dd>Usá un valor entre <code>30000</code> y <code>32767</code>, u omitilo para que se asigne solo.</dd>
+        </dl>
+      </div>
+
+      <div class="card t-warn">
+        <h3>Ingress devuelve 404 o no hace nada</h3>
+        <dl class="fix">
+          <dt>Causa</dt><dd>No hay Ingress controller instalado, <code>ingressClassName</code> no coincide, o el <code>host</code> no es el que escribís en el navegador.</dd>
+          <dt>Solución</dt><dd><pre><code>kubectl get ingressclass
+kubectl describe ingress chanchito</code></pre></dd>
+        </dl>
+      </div>
+
+      <div class="card t-warn">
+        <h3>port-forward: puerto ocupado</h3>
+        <div class="err"><pre><code data-lang="plain">Unable to listen on port 3000: ... bind: address already in use</code></pre></div>
+        <dl class="fix">
+          <dt>Solución</dt><dd>Otro proceso (¿tu <code>docker compose</code>?) usa ese puerto. Usá otro local: <code>kubectl port-forward svc/chanchito 3001:80</code>.</dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= KUBECTL ================= -->
+  <section class="block" id="kubectl" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-file)">3</div>
+      <div class="titles"><h2>kubectl y YAML</h2></div>
+    </div>
+    <div class="grid">
+      <div class="card t-bad">
+        <h3>No conecta al cluster</h3>
+        <div class="err"><pre><code data-lang="plain">The connection to the server localhost:8080 was refused - did you specify the right host or port?</code></pre></div>
+        <dl class="fix">
+          <dt>Causa</dt><dd>No hay cluster corriendo o no hay kubeconfig/contexto seleccionado.</dd>
+          <dt>Solución</dt><dd>Encendé Kubernetes en Docker Desktop (o <code>minikube start</code>) y:<pre><code>kubectl config get-contexts
+kubectl config use-context docker-desktop</code></pre></dd>
+        </dl>
+      </div>
+
+      <div class="card t-warn">
+        <h3>No resources found</h3>
+        <div class="err"><pre><code data-lang="plain">No resources found in default namespace.</code></pre></div>
+        <dl class="fix">
+          <dt>Causa</dt><dd>Lo creaste en otro namespace o estás en otro contexto/cluster.</dd>
+          <dt>Solución</dt><dd><pre><code>kubectl get pods -A
+kubectl config current-context</code></pre></dd>
+        </dl>
+      </div>
+
+      <div class="card t-bad">
+        <h3>Error de YAML / campo desconocido</h3>
+        <div class="err"><pre><code data-lang="plain">error converting YAML to JSON: yaml: line 12: mapping values are not allowed in this context
+strict decoding error: unknown field "spec.template.spec.contaners"</code></pre></div>
+        <dl class="fix">
+          <dt>Causa</dt><dd>Indentación/tabs, o un nombre de campo mal escrito.</dd>
+          <dt>Solución</dt><dd><pre><code>kubectl apply -f k8s/ --dry-run=server
+kubectl explain deployment.spec.template.spec</code></pre></dd>
+        </dl>
+      </div>
+
+      <div class="card t-bad">
+        <h3>field is immutable</h3>
+        <div class="err"><pre><code data-lang="plain">The Deployment "chanchito" is invalid: spec.selector: Invalid value: ... field is immutable</code></pre></div>
+        <dl class="fix">
+          <dt>Causa</dt><dd>Cambiaste el <code>selector</code> de un Deployment (o campos fijos de un Service/PVC) ya creado.</dd>
+          <dt>Solución</dt><dd><pre><code>kubectl delete deploy chanchito
+kubectl apply -f k8s/chanchito.yaml</code></pre></dd>
+        </dl>
+      </div>
+
+      <div class="card t-bad">
+        <h3>selector no coincide con template</h3>
+        <div class="err"><pre><code data-lang="plain">spec.template.metadata.labels: Invalid value: {"app":"chanchito"}: `selector` does not match template `labels`</code></pre></div>
+        <dl class="fix">
+          <dt>Solución</dt><dd><code>spec.selector.matchLabels</code> tiene que ser igual a <code>spec.template.metadata.labels</code>.</dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DATOS ================= -->
+  <section class="block" id="datos" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-vol)">4</div>
+      <div class="titles"><h2>Config y datos</h2></div>
+    </div>
+    <div class="grid">
+      <div class="card t-warn">
+        <h3>Cambié el ConfigMap/Secret y la app sigue igual</h3>
+        <dl class="fix">
+          <dt>Causa</dt><dd>Las variables de entorno se leen solo al arrancar el contenedor.</dd>
+          <dt>Solución</dt><dd><pre><code>kubectl rollout restart deploy/chanchito</code></pre></dd>
+        </dl>
+      </div>
+
+      <div class="card t-bad">
+        <h3>Se perdieron los datos de Mongo</h3>
+        <dl class="fix">
+          <dt>Causa</dt><dd>No había PVC (los datos estaban dentro del Pod), el <code>mountPath</code> no era <code>/data/db</code>, o <code>kubectl delete -f k8s/</code> borró el PVC (con <code>reclaimPolicy: Delete</code> se borra el disco).</dd>
+          <dt>Solución</dt><dd>PVC + mountPath correcto. Para bajar la app sin perder datos, borrá solo los Deployments: <code>kubectl delete deploy chanchito monguito</code>.</dd>
+        </dl>
+      </div>
+
+      <div class="card t-bad">
+        <h3>Mongo: Authentication failed tras cambiar el Secret</h3>
+        <dl class="fix">
+          <dt>Causa</dt><dd>Igual que en Docker: <code>MONGO_INITDB_ROOT_*</code> solo se aplica con el disco vacío. El PVC ya tenía el usuario viejo.</dd>
+          <dt>Solución</dt><dd><pre><code># ⚠ incluye el PVC: borra los datos
+kubectl delete -f k8s/monguito.yaml
+kubectl apply -f k8s/monguito.yaml</code></pre></dd>
+        </dl>
+      </div>
+
+      <div class="card t-warn">
+        <h3>PVC en Pending</h3>
+        <dl class="fix">
+          <dt>Causa</dt><dd>No hay StorageClass por defecto, o pediste un <code>accessMode</code> que no soporta (ej. <code>ReadWriteMany</code> en local).</dd>
+          <dt>Solución</dt><dd><pre><code>kubectl get storageclass
+kubectl describe pvc mongo-data</code></pre>Una StorageClass tiene que figurar como <code>(default)</code>.</dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <p class="empty">No encontré ese problema. Probá con otra palabra del error o del STATUS.</p>
+
+  <footer class="foot">
+    <a href="05-de-compose-a-k8s.html">← De Compose a K8s</a>
+    <a href="index.html">Volver al inicio</a>
+  </footer>
+</main>
+</body>
+</html>

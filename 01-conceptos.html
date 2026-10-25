@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Conceptos de Kubernetes con diagramas: arquitectura del cluster, estado deseado, Deployment, Pods y equivalencias con Docker.">
+<meta name="theme-color" content="#326ce5">
+<title>Kubernetes · Conceptos</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%8E%88%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/app.js"></script>
+</head>
+<body data-set="k8s" data-page="conceptos">
+<header class="topbar"></header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head"/></marker>
+    <marker id="ah-img" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-img"/></marker>
+    <marker id="ah-cont" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-cont"/></marker>
+    <marker id="ah-comp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-comp"/></marker>
+    <marker id="ah-file" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-file"/></marker>
+  </defs>
+</svg>
+
+<main class="wrap">
+
+  <div class="hero">
+    <span class="eyebrow">Kubernetes · Cheatsheet 01</span>
+    <h1>Conceptos clave de Kubernetes</h1>
+    <p class="lead">Docker corre contenedores en <b>una</b> máquina. Kubernetes los reparte en <b>varias</b>, los reinicia si se caen, los escala y los conecta. Vos describís lo que querés; el cluster se encarga de que pase.</p>
+    <nav class="toc">
+      <a href="#arquitectura">Arquitectura</a>
+      <a href="#declarativo">Estado deseado</a>
+      <a href="#jerarquia">Deployment → Pod</a>
+      <a href="#glosario">Glosario</a>
+      <a href="#equivalencias">Docker ↔ Kubernetes</a>
+    </nav>
+  </div>
+
+  <!-- ================= ARQUITECTURA ================= -->
+  <section class="block" id="arquitectura">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-comp)">1</div>
+      <div class="titles"><h2>Arquitectura de un cluster</h2><p>Un <b>control plane</b> que decide y <b>nodos</b> que ejecutan. Vos solo hablás con la API.</p></div>
+    </div>
+    <div class="diagram">
+      <div class="svg-scroll">
+      <svg viewBox="0 0 1000 400" role="img" aria-label="kubectl habla con el kube-apiserver del control plane, que da órdenes al kubelet de cada nodo, donde corren los Pods">
+        <!-- vos -->
+        <text x="82" y="150" text-anchor="middle" class="d-lbl">get · apply · logs</text>
+        <rect x="14" y="165" width="136" height="74" rx="12" class="d-plain"/>
+        <text x="82" y="192" text-anchor="middle" class="d-title">Vos</text>
+        <text x="82" y="212" text-anchor="middle" class="d-code" style="font-weight:700">kubectl</text>
+        <text x="82" y="229" text-anchor="middle" class="d-lbl">~/.kube/config</text>
+        <path d="M150,190 C176,190 180,98 206,98" class="d-line s-img" style="stroke-width:2.2" marker-end="url(#ah-img)"/>
+
+        <!-- control plane -->
+        <rect x="190" y="20" width="300" height="360" rx="16" class="d-comp" style="fill-opacity:.45"/>
+        <text x="210" y="48" class="d-title">Control plane</text>
+        <text x="470" y="48" text-anchor="end" class="d-lbl">el cerebro</text>
+
+        <rect x="210" y="66" width="260" height="64" rx="10" class="d-img"/>
+        <text x="340" y="93" text-anchor="middle" class="d-code" style="font-weight:700">kube-apiserver</text>
+        <text x="340" y="113" text-anchor="middle" class="d-sub">puerta de entrada: todo pasa por acá</text>
+
+        <rect x="210" y="142" width="260" height="64" rx="10" class="d-plain"/>
+        <text x="340" y="169" text-anchor="middle" class="d-code" style="font-weight:700">etcd</text>
+        <text x="340" y="189" text-anchor="middle" class="d-sub">base de datos del estado deseado</text>
+
+        <rect x="210" y="218" width="260" height="64" rx="10" class="d-plain"/>
+        <text x="340" y="245" text-anchor="middle" class="d-code" style="font-weight:700">kube-scheduler</text>
+        <text x="340" y="265" text-anchor="middle" class="d-sub">elige en qué nodo corre cada Pod</text>
+
+        <rect x="210" y="294" width="260" height="64" rx="10" class="d-plain"/>
+        <text x="340" y="321" text-anchor="middle" class="d-code" style="font-weight:700">controller-manager</text>
+        <text x="340" y="341" text-anchor="middle" class="d-sub">corrige: estado real → deseado</text>
+
+        <!-- nodo 1 -->
+        <rect x="540" y="20" width="446" height="170" rx="16" class="d-box"/>
+        <text x="558" y="46" class="d-title">Nodo 1 <tspan class="d-sub">(worker)</tspan></text>
+        <text x="968" y="46" text-anchor="end" class="d-lbl">runtime: containerd</text>
+        <rect x="558" y="62" width="150" height="50" rx="9" class="d-plain"/>
+        <text x="633" y="84" text-anchor="middle" class="d-code" style="font-weight:700">kubelet</text>
+        <text x="633" y="102" text-anchor="middle" class="d-sub">maneja los Pods</text>
+        <rect x="558" y="122" width="150" height="50" rx="9" class="d-plain"/>
+        <text x="633" y="144" text-anchor="middle" class="d-code" style="font-weight:700">kube-proxy</text>
+        <text x="633" y="162" text-anchor="middle" class="d-sub">reglas de red</text>
+
+        <rect x="726" y="62" width="115" height="110" rx="12" class="d-cont"/>
+        <text x="783" y="88" text-anchor="middle" class="d-title">Pod</text>
+        <rect x="738" y="102" width="91" height="28" rx="6" class="d-plain"/>
+        <text x="783" y="121" text-anchor="middle" class="d-lbl">chanchito</text>
+        <text x="783" y="154" text-anchor="middle" class="d-lbl">10.1.0.12</text>
+
+        <rect x="853" y="62" width="115" height="110" rx="12" class="d-cont"/>
+        <text x="910" y="88" text-anchor="middle" class="d-title">Pod</text>
+        <rect x="865" y="102" width="91" height="28" rx="6" class="d-plain"/>
+        <text x="910" y="121" text-anchor="middle" class="d-lbl">chanchito</text>
+        <text x="910" y="154" text-anchor="middle" class="d-lbl">10.1.0.13</text>
+
+        <!-- nodo 2 -->
+        <rect x="540" y="210" width="446" height="170" rx="16" class="d-box"/>
+        <text x="558" y="236" class="d-title">Nodo 2 <tspan class="d-sub">(worker)</tspan></text>
+        <text x="968" y="236" text-anchor="end" class="d-lbl">runtime: containerd</text>
+        <rect x="558" y="252" width="150" height="50" rx="9" class="d-plain"/>
+        <text x="633" y="274" text-anchor="middle" class="d-code" style="font-weight:700">kubelet</text>
+        <text x="633" y="292" text-anchor="middle" class="d-sub">maneja los Pods</text>
+        <rect x="558" y="312" width="150" height="50" rx="9" class="d-plain"/>
+        <text x="633" y="334" text-anchor="middle" class="d-code" style="font-weight:700">kube-proxy</text>
+        <text x="633" y="352" text-anchor="middle" class="d-sub">reglas de red</text>
+
+        <rect x="726" y="252" width="115" height="110" rx="12" class="d-cont"/>
+        <text x="783" y="278" text-anchor="middle" class="d-title">Pod</text>
+        <rect x="738" y="292" width="91" height="28" rx="6" class="d-plain"/>
+        <text x="783" y="311" text-anchor="middle" class="d-lbl">chanchito</text>
+        <text x="783" y="344" text-anchor="middle" class="d-lbl">10.1.1.7</text>
+
+        <rect x="853" y="252" width="115" height="110" rx="12" class="d-cont"/>
+        <text x="910" y="278" text-anchor="middle" class="d-title">Pod</text>
+        <rect x="865" y="292" width="91" height="28" rx="6" class="d-plain"/>
+        <text x="910" y="311" text-anchor="middle" class="d-lbl">monguito</text>
+        <text x="910" y="344" text-anchor="middle" class="d-lbl">10.1.1.8</text>
+
+        <!-- api -> kubelets -->
+        <path d="M470,92 C512,92 515,87 554,87" class="d-line s-comp" marker-end="url(#ah-comp)"/>
+        <path d="M470,108 C525,108 505,277 554,277" class="d-line s-comp" marker-end="url(#ah-comp)"/>
+      </svg>
+      </div>
+      <div class="grid cols-3" style="margin-top:12px">
+        <div class="callout info"><span class="ico">i</span><p>En tu PC (Docker Desktop, minikube, kind) el control plane y el nodo son <b>la misma máquina</b>. La idea es igual.</p></div>
+        <div class="callout info"><span class="ico">i</span><p>Cada Pod tiene <b>su propia IP</b> dentro del cluster, pero es efímera: si el Pod se recrea, cambia.</p></div>
+        <div class="callout tip"><span class="ico">✓</span><p><code>kubectl</code> = el “docker CLI” de Kubernetes. Lee el cluster al que apunta desde <code>~/.kube/config</code>.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DECLARATIVO ================= -->
+  <section class="block" id="declarativo">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-file)">2</div>
+      <div class="titles"><h2>Declarativo: estado deseado vs estado real</h2><p>No decís “arrancá un contenedor”. Decís “quiero 3” y Kubernetes lo mantiene así para siempre.</p></div>
+    </div>
+    <div class="diagram">
+      <div class="svg-scroll">
+      <svg viewBox="0 0 1000 235" role="img" aria-label="Vos declarás 3 réplicas; se guarda como estado deseado; el controller compara con el estado real y crea los Pods que faltan, en un bucle continuo">
+        <rect x="20" y="50" width="200" height="110" rx="14" class="d-file"/>
+        <text x="120" y="80" text-anchor="middle" class="d-title">Vos declarás</text>
+        <text x="120" y="104" text-anchor="middle" class="d-code" style="font-weight:700">replicas: 3</text>
+        <text x="120" y="130" text-anchor="middle" class="d-lbl">kubectl apply -f</text>
+
+        <rect x="275" y="50" width="200" height="110" rx="14" class="d-comp"/>
+        <text x="375" y="80" text-anchor="middle" class="d-title">Estado deseado</text>
+        <text x="375" y="104" text-anchor="middle" class="d-sub">guardado en etcd</text>
+        <text x="375" y="130" text-anchor="middle" class="d-lbl">3 Pods chanchito</text>
+
+        <rect x="530" y="50" width="210" height="110" rx="14" class="d-plain"/>
+        <text x="635" y="80" text-anchor="middle" class="d-title">Controller compara</text>
+        <text x="635" y="104" text-anchor="middle" class="d-sub">deseado 3 ≠ real 2</text>
+        <text x="635" y="130" text-anchor="middle" class="d-lbl">(un Pod se cayó)</text>
+
+        <rect x="795" y="50" width="190" height="110" rx="14" class="d-cont"/>
+        <text x="890" y="80" text-anchor="middle" class="d-title">Estado real</text>
+        <text x="890" y="104" text-anchor="middle" class="d-sub">crea 1 Pod nuevo</text>
+        <text x="890" y="130" text-anchor="middle" class="d-lbl">→ 3 Pods ✓</text>
+
+        <path d="M220,105 L271,105" class="d-line s-file" marker-end="url(#ah-file)"/>
+        <path d="M475,105 L526,105" class="d-line s-comp" marker-end="url(#ah-comp)"/>
+        <path d="M740,105 L791,105" class="d-line s-cont" marker-end="url(#ah-cont)"/>
+        <path d="M890,160 C890,212 635,212 635,164" class="d-line" style="stroke-dasharray:6 5" marker-end="url(#ah)"/>
+        <text x="762" y="226" text-anchor="middle" class="d-lbl">bucle continuo (reconciliación)</text>
+      </svg>
+      </div>
+      <div class="callout info"><span class="ico">i</span><p>Por eso si borrás un Pod de un Deployment <b>vuelve a aparecer</b>: el estado deseado sigue diciendo 3. Para bajarlo, cambiá el deseado (<code>kubectl scale</code> o editá el YAML) o borrá el Deployment.</p></div>
+    </div>
+  </section>
+
+  <!-- ================= JERARQUIA ================= -->
+  <section class="block" id="jerarquia">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-img)">3</div>
+      <div class="titles"><h2>Deployment → ReplicaSet → Pods</h2><p>Vos escribís el Deployment. Lo demás lo crea Kubernetes.</p></div>
+    </div>
+    <div class="diagram">
+      <div class="svg-scroll">
+      <svg viewBox="0 0 1000 300" role="img" aria-label="Un Deployment crea un ReplicaSet que mantiene tres Pods">
+        <rect x="20" y="50" width="240" height="200" rx="14" class="d-img"/>
+        <text x="140" y="86" text-anchor="middle" class="d-title">Deployment</text>
+        <text x="140" y="110" text-anchor="middle" class="d-code" style="font-weight:700">chanchito</text>
+        <text x="140" y="146" text-anchor="middle" class="d-lbl">replicas: 3</text>
+        <text x="140" y="168" text-anchor="middle" class="d-lbl">image: chanchito:1</text>
+        <text x="140" y="190" text-anchor="middle" class="d-lbl">strategy: RollingUpdate</text>
+        <text x="140" y="228" text-anchor="middle" class="d-sub">lo que vos escribís</text>
+
+        <path d="M260,150 L326,150" class="d-line s-img" marker-end="url(#ah-img)"/>
+        <text x="293" y="140" text-anchor="middle" class="d-lbl">crea</text>
+
+        <rect x="330" y="85" width="210" height="130" rx="14" class="d-img" style="fill-opacity:.55"/>
+        <text x="435" y="118" text-anchor="middle" class="d-title">ReplicaSet</text>
+        <text x="435" y="142" text-anchor="middle" class="d-code">chanchito-7d9f8</text>
+        <text x="435" y="168" text-anchor="middle" class="d-sub">mantiene 3 Pods vivos</text>
+        <text x="435" y="192" text-anchor="middle" class="d-lbl">(no se toca a mano)</text>
+
+        <path d="M540,140 C575,140 572,55 606,55" class="d-line s-cont" marker-end="url(#ah-cont)"/>
+        <path d="M540,150 L606,150" class="d-line s-cont" marker-end="url(#ah-cont)"/>
+        <path d="M540,160 C575,160 572,245 606,245" class="d-line s-cont" marker-end="url(#ah-cont)"/>
+
+        <rect x="610" y="17" width="190" height="76" rx="12" class="d-cont"/>
+        <text x="705" y="47" text-anchor="middle" class="d-code" style="font-weight:700">chanchito-7d9f8-x2k4</text>
+        <text x="705" y="71" text-anchor="middle" class="d-lbl">Pod · 10.1.0.12</text>
+        <rect x="610" y="112" width="190" height="76" rx="12" class="d-cont"/>
+        <text x="705" y="142" text-anchor="middle" class="d-code" style="font-weight:700">chanchito-7d9f8-p8qz</text>
+        <text x="705" y="166" text-anchor="middle" class="d-lbl">Pod · 10.1.0.13</text>
+        <rect x="610" y="207" width="190" height="76" rx="12" class="d-cont"/>
+        <text x="705" y="237" text-anchor="middle" class="d-code" style="font-weight:700">chanchito-7d9f8-m3vt</text>
+        <text x="705" y="261" text-anchor="middle" class="d-lbl">Pod · 10.1.1.7</text>
+
+        <text x="905" y="104" text-anchor="middle" class="d-sub">Si un Pod muere, el</text>
+        <text x="905" y="124" text-anchor="middle" class="d-sub">ReplicaSet crea otro</text>
+        <text x="905" y="144" text-anchor="middle" class="d-sub">con nombre e IP nuevos.</text>
+        <text x="905" y="180" text-anchor="middle" class="d-title" style="font-size:13.5px">Nunca apuntes a</text>
+        <text x="905" y="200" text-anchor="middle" class="d-title" style="font-size:13.5px">la IP de un Pod:</text>
+        <text x="905" y="220" text-anchor="middle" class="d-title f-net" style="font-size:13.5px">usá un Service</text>
+      </svg>
+      </div>
+      <div class="callout info"><span class="ico">i</span><p>Un <b>Pod</b> es la unidad mínima: envuelve uno (o pocos) contenedores que comparten IP y volúmenes. Casi nunca se crean Pods sueltos: se crean con un <b>Deployment</b>.</p></div>
+    </div>
+  </section>
+
+  <!-- ================= GLOSARIO ================= -->
+  <section class="block" id="glosario" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-cont)">4</div>
+      <div class="titles"><h2>Glosario de objetos</h2><p>Los “kinds” que vas a ver en los YAML. Entre paréntesis, el nombre corto para <code>kubectl</code>.</p></div>
+    </div>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))">
+      <div class="card t-comp">
+        <span class="tag">Infraestructura</span>
+        <h3>Cluster y Node (no)</h3>
+        <p>El <b>cluster</b> es el conjunto de máquinas. Cada máquina es un <b>nodo</b> que corre Pods.</p>
+        <ul><li><code>kubectl get nodes</code></li></ul>
+      </div>
+      <div class="card t-cont">
+        <span class="tag">Carga de trabajo</span>
+        <h3>Pod (po)</h3>
+        <p>Uno o más contenedores que comparten red (misma IP, se hablan por <code>localhost</code>) y volúmenes. Efímero.</p>
+        <ul><li>≈ un <code>docker run</code></li></ul>
+      </div>
+      <div class="card t-img">
+        <span class="tag">Carga de trabajo</span>
+        <h3>Deployment (deploy)</h3>
+        <p>Declara <b>qué imagen</b> y <b>cuántas réplicas</b>. Se encarga de recrear, escalar y actualizar sin cortes (rolling update).</p>
+        <ul><li>Para apps <b>sin estado</b> (APIs, frontends)</li></ul>
+      </div>
+      <div class="card t-img">
+        <span class="tag">Carga de trabajo</span>
+        <h3>ReplicaSet (rs)</h3>
+        <p>Mantiene N Pods idénticos vivos. Lo crea el Deployment; cada versión nueva genera un ReplicaSet nuevo (así funciona el rollback).</p>
+      </div>
+      <div class="card t-net">
+        <span class="tag">Red</span>
+        <h3>Service (svc)</h3>
+        <p><b>IP y nombre DNS fijos</b> delante de un grupo de Pods (elegidos por labels). Balancea entre ellos.</p>
+        <ul><li>Tipos: <code>ClusterIP</code>, <code>NodePort</code>, <code>LoadBalancer</code></li></ul>
+      </div>
+      <div class="card t-net">
+        <span class="tag">Red</span>
+        <h3>Ingress (ing)</h3>
+        <p>Entrada HTTP/HTTPS desde afuera: rutea por <b>dominio y path</b> hacia Services. Necesita un Ingress Controller instalado (ej. Traefik). Su sucesor es la <b>Gateway API</b>.</p>
+      </div>
+      <div class="card t-file">
+        <span class="tag">Configuración</span>
+        <h3>ConfigMap (cm)</h3>
+        <p>Configuración no sensible (URLs, flags, archivos de config) que se inyecta como variables de entorno o archivos.</p>
+      </div>
+      <div class="card t-file">
+        <span class="tag">Configuración</span>
+        <h3>Secret</h3>
+        <p>Como ConfigMap pero para contraseñas y tokens. Ojo: está en <b>base64, no cifrado</b> por defecto.</p>
+      </div>
+      <div class="card t-vol">
+        <span class="tag">Almacenamiento</span>
+        <h3>PersistentVolumeClaim (pvc)</h3>
+        <p>Un “pedido” de disco (ej. 1Gi). El cluster lo satisface con un <b>PersistentVolume (pv)</b>. ≈ volumen nombrado de Docker.</p>
+      </div>
+      <div class="card t-comp">
+        <span class="tag">Organización</span>
+        <h3>Namespace (ns)</h3>
+        <p>Carpeta lógica para separar recursos (dev / prod / equipo). Los nombres son únicos dentro de un namespace.</p>
+        <ul><li>Por defecto: <code>default</code></li></ul>
+      </div>
+      <div class="card t-img">
+        <span class="tag">Carga de trabajo</span>
+        <h3>StatefulSet (sts) · DaemonSet (ds)</h3>
+        <p><b>StatefulSet</b>: Pods con nombre e identidad estables y disco propio (bases de datos). <b>DaemonSet</b>: un Pod en <b>cada</b> nodo (logs, monitoreo).</p>
+      </div>
+      <div class="card t-img">
+        <span class="tag">Carga de trabajo</span>
+        <h3>Job · CronJob (cj)</h3>
+        <p><b>Job</b>: corre hasta terminar (migraciones, scripts). <b>CronJob</b>: un Job programado (<code>"0 3 * * *"</code>).</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= EQUIVALENCIAS ================= -->
+  <section class="block" id="equivalencias" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-img)">5</div>
+      <div class="titles"><h2>Lo que ya sabés de Docker, en Kubernetes</h2><p>Traducción directa para tus proyectos.</p></div>
+    </div>
+    <div class="card t-img wide">
+      <h3>Docker / Compose → Kubernetes</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>En Docker</th><th>En Kubernetes</th><th>Nota</th></tr></thead>
+          <tbody>
+            <tr><td><code>docker run</code></td><td>Pod</td><td>En la práctica, siempre vía Deployment</td></tr>
+            <tr><td>Un servicio del compose</td><td><b>Deployment + Service</b></td><td>El Deployment corre los Pods, el Service les da nombre</td></tr>
+            <tr><td><code>docker-compose.yml</code></td><td>Manifiestos YAML (uno o varios)</td><td>Separados con <code>---</code></td></tr>
+            <tr><td><code>docker compose up -d</code></td><td><code>kubectl apply -f k8s/</code></td><td>Crea o actualiza todo lo de la carpeta</td></tr>
+            <tr><td><code>docker compose down</code></td><td><code>kubectl delete -f k8s/</code></td><td>Los PVC se borran si están en esos archivos</td></tr>
+            <tr><td><code>ports: "3000:3000"</code></td><td>Service <code>NodePort</code> / Ingress / <code>port-forward</code></td><td>Para pruebas: <code>kubectl port-forward</code></td></tr>
+            <tr><td>Nombre del servicio como host</td><td>Nombre del <b>Service</b> como host</td><td><code>monguito:27017</code> sigue funcionando</td></tr>
+            <tr><td><code>environment:</code></td><td><code>env</code> / ConfigMap / Secret</td><td>Secrets para contraseñas</td></tr>
+            <tr><td><code>volumes: mongo-data:/data/db</code></td><td>PVC + <code>volumeMounts</code></td><td>Mismo path dentro del contenedor</td></tr>
+            <tr><td><code>restart: unless-stopped</code></td><td>Automático en Deployment</td><td>Los Pods se recrean solos</td></tr>
+            <tr><td><code>depends_on</code></td><td>No existe</td><td>Usar <code>readinessProbe</code>, reintentos o <code>initContainers</code></td></tr>
+            <tr><td><code>docker ps</code></td><td><code>kubectl get pods</code></td><td></td></tr>
+            <tr><td><code>docker logs -f</code></td><td><code>kubectl logs -f</code></td><td></td></tr>
+            <tr><td><code>docker exec -it … sh</code></td><td><code>kubectl exec -it … -- sh</code></td><td>Ojo con el <code>--</code></td></tr>
+            <tr><td><code>docker build</code></td><td>Sigue siendo <code>docker build</code></td><td>Kubernetes no construye imágenes, solo las corre</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <a href="index.html">← Inicio</a>
+    <a href="02-kubectl.html">Siguiente: kubectl →</a>
+  </footer>
+</main>
+</body>
+</html>

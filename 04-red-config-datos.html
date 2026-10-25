@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Red, configuración y almacenamiento en Kubernetes: tipos de Service, DNS, Ingress, ConfigMap, Secret, PVC y StatefulSet.">
+<meta name="theme-color" content="#326ce5">
+<title>Kubernetes · Red, config y datos</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%8E%88%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/app.js"></script>
+</head>
+<body data-set="k8s" data-page="red-datos">
+<header class="topbar"></header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head"/></marker>
+    <marker id="ah-net" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-net"/></marker>
+    <marker id="ah-file" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-file"/></marker>
+    <marker id="ah-vol" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-vol"/></marker>
+    <marker id="ah-cont" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-cont"/></marker>
+  </defs>
+</svg>
+
+<main class="wrap">
+
+  <div class="hero">
+    <span class="eyebrow">Kubernetes · Cheatsheet 04</span>
+    <h1>Red, configuración y datos</h1>
+    <p class="lead">Cómo llega el tráfico a tus Pods, cómo se encuentran entre sí, cómo reciben configuración y dónde guardan datos.</p>
+    <nav class="toc">
+      <a href="#services">Tipos de Service</a>
+      <a href="#dns">DNS interno</a>
+      <a href="#ingress">Ingress</a>
+      <a href="#config">ConfigMap y Secret</a>
+      <a href="#storage">Almacenamiento</a>
+      <a href="#statefulset">StatefulSet</a>
+    </nav>
+  </div>
+
+  <!-- ================= SERVICES ================= -->
+  <section class="block" id="services">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-net)">1</div>
+      <div class="titles"><h2>Tipos de Service y sus puertos</h2><p>Cada tipo <b>agrega</b> una capa sobre el anterior.</p></div>
+    </div>
+    <div class="diagram">
+      <div class="svg-scroll">
+      <svg viewBox="0 0 1000 325" role="img" aria-label="Cadena: cliente, LoadBalancer, NodePort en el nodo, Service ClusterIP y Pods. Cada tipo incluye al siguiente.">
+        <!-- brackets -->
+        <path d="M215,70 L215,58 L980,58 L980,70" class="d-line s-img"/>
+        <text x="223" y="50" class="d-title" style="font-size:13.5px"><tspan class="f-img">LoadBalancer</tspan> <tspan class="d-sub">IP externa (cloud · localhost en Docker Desktop)</tspan></text>
+        <path d="M410,105 L410,93 L980,93 L980,105" class="d-line s-comp"/>
+        <text x="418" y="85" class="d-title" style="font-size:13.5px"><tspan class="f-comp">NodePort</tspan> <tspan class="d-sub">puerto 30000–32767 en cada nodo</tspan></text>
+        <path d="M605,140 L605,128 L980,128 L980,140" class="d-line s-net"/>
+        <text x="613" y="120" class="d-title" style="font-size:13.5px"><tspan class="f-net">ClusterIP</tspan> <tspan class="d-sub">solo dentro del cluster (default)</tspan></text>
+
+        <!-- cadena -->
+        <rect x="20" y="152" width="150" height="62" rx="12" class="d-plain"/>
+        <text x="95" y="178" text-anchor="middle" class="d-title">Cliente</text>
+        <text x="95" y="199" text-anchor="middle" class="d-sub">navegador</text>
+
+        <rect x="215" y="152" width="150" height="62" rx="12" class="d-img"/>
+        <text x="290" y="178" text-anchor="middle" class="d-title">Balanceador</text>
+        <text x="290" y="199" text-anchor="middle" class="d-lbl">IP-externa:80</text>
+
+        <rect x="410" y="152" width="150" height="62" rx="12" class="d-comp"/>
+        <text x="485" y="178" text-anchor="middle" class="d-title">Nodo</text>
+        <text x="485" y="199" text-anchor="middle" class="d-lbl">nodePort 30080</text>
+
+        <rect x="605" y="152" width="165" height="62" rx="12" class="d-net" style="stroke-dasharray:none"/>
+        <text x="687" y="178" text-anchor="middle" class="d-title">Service</text>
+        <text x="687" y="199" text-anchor="middle" class="d-lbl">port 80</text>
+
+        <rect x="815" y="152" width="165" height="62" rx="12" class="d-cont"/>
+        <text x="897" y="178" text-anchor="middle" class="d-title">Pods</text>
+        <text x="897" y="199" text-anchor="middle" class="d-lbl">targetPort 3000</text>
+
+        <path d="M170,183 L211,183" class="d-line" marker-end="url(#ah)"/>
+        <path d="M365,183 L406,183" class="d-line" marker-end="url(#ah)"/>
+        <path d="M560,183 L601,183" class="d-line" marker-end="url(#ah)"/>
+        <path d="M770,183 L811,183" class="d-line s-net" style="stroke-width:2.4" marker-end="url(#ah-net)"/>
+
+        <!-- accesos internos -->
+        <rect x="400" y="258" width="190" height="52" rx="12" class="d-plain"/>
+        <text x="495" y="280" text-anchor="middle" class="d-title" style="font-size:13.5px">Tu PC</text>
+        <text x="495" y="298" text-anchor="middle" class="d-lbl">port-forward 3000:80</text>
+        <path d="M590,284 C640,284 650,250 668,218" class="d-line" style="stroke-dasharray:5 4" marker-end="url(#ah)"/>
+
+        <rect x="800" y="258" width="180" height="52" rx="12" class="d-cont" style="fill-opacity:.5"/>
+        <text x="890" y="280" text-anchor="middle" class="d-title" style="font-size:13.5px">otro Pod</text>
+        <text x="890" y="298" text-anchor="middle" class="d-lbl">http://chanchito</text>
+        <path d="M800,284 C750,284 720,250 708,218" class="d-line s-net" marker-end="url(#ah-net)"/>
+      </svg>
+      </div>
+    </div>
+    <div class="grid cols-2" style="margin-top:16px">
+      <div class="card t-net">
+        <h3>¿Cuál uso?</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Tipo</th><th>Accesible desde</th><th>Uso típico</th></tr></thead>
+            <tbody>
+              <tr><td><code>ClusterIP</code></td><td>Solo dentro del cluster</td><td>Bases de datos, APIs internas (monguito)</td></tr>
+              <tr><td><code>NodePort</code></td><td>IP del nodo : 30000–32767</td><td>Pruebas locales sin Ingress</td></tr>
+              <tr><td><code>LoadBalancer</code></td><td>IP externa</td><td>Producción en cloud (AKS, EKS, GKE)</td></tr>
+              <tr><td>Ingress / Gateway</td><td>Dominio HTTP(S)</td><td>Varias apps web detrás de una sola entrada</td></tr>
+              <tr><td>Headless (<code>clusterIP: None</code>)</td><td>DNS directo a cada Pod</td><td>StatefulSets (réplicas de DB)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card t-net">
+        <h3>Los 4 puertos</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Campo</th><th>Dónde</th><th>Ejemplo</th></tr></thead>
+            <tbody>
+              <tr><td><code>containerPort</code></td><td>Deployment: donde escucha la app</td><td><code>3000</code></td></tr>
+              <tr><td><code>targetPort</code></td><td>Service: a qué puerto del Pod manda</td><td><code>3000</code></td></tr>
+              <tr><td><code>port</code></td><td>Service: el puerto “público” del Service</td><td><code>80</code></td></tr>
+              <tr><td><code>nodePort</code></td><td>Service NodePort: puerto en el nodo</td><td><code>30080</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout warn"><span class="ico">!</span><p>El error más común: <code>targetPort</code> distinto del puerto real de la app. El Service existe pero responde <i>connection refused</i>.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DNS ================= -->
+  <section class="block" id="dns">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-net)">2</div>
+      <div class="titles"><h2>DNS interno</h2><p>Cada Service tiene un nombre resoluble desde cualquier Pod. Igual que el nombre de servicio en compose.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card t-net">
+        <h3>Formas del nombre</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nombre</th><th>Funciona desde</th></tr></thead>
+            <tbody>
+              <tr><td><code>monguito</code></td><td>Pods del <b>mismo</b> namespace</td></tr>
+              <tr><td><code>monguito.datos</code></td><td>Cualquier namespace (<code>&lt;service&gt;.&lt;namespace&gt;</code>)</td></tr>
+              <tr><td><code>monguito.datos.svc.cluster.local</code></td><td>Nombre completo (FQDN)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <pre style="margin-top:10px"><code data-lang="plain">mongodb://mati:&lt;password&gt;@monguito:27017/miapp?authSource=admin</code></pre>
+        <div class="callout tip"><span class="ico">✓</span><p>Si el Service de Mongo se llama <code>monguito</code>, tu <code>app.js</code> <b>no cambia</b> al pasar de compose a Kubernetes.</p></div>
+      </div>
+      <div class="card t-net">
+        <h3>Probar la resolución</h3>
+        <div class="cmd"><pre><code>kubectl run tmp --rm -it --image=busybox -- nslookup monguito</code></pre><div class="what">¿El nombre resuelve a la IP del Service?</div></div>
+        <div class="cmd"><pre><code>kubectl run tmp --rm -it --image=busybox -- wget -qO- http://chanchito</code></pre><div class="what">¿El Service responde desde adentro del cluster?</div></div>
+        <div class="cmd"><pre><code>kubectl get endpoints chanchito</code></pre><div class="what">IPs de los Pods detrás del Service. Vacío = selector mal o Pods no Ready.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= INGRESS ================= -->
+  <section class="block" id="ingress">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-net)">3</div>
+      <div class="titles"><h2>Ingress: una entrada, varios destinos</h2><p>Rutea por host y path. El YAML está en <a href="03-manifiestos.html#ingress">Manifiestos</a>.</p></div>
+    </div>
+    <div class="diagram">
+      <div class="svg-scroll">
+      <svg viewBox="0 0 1000 250" role="img" aria-label="El Ingress controller recibe todo el tráfico HTTP y lo reparte por host y path a distintos Services">
+        <rect x="20" y="95" width="140" height="62" rx="12" class="d-plain"/>
+        <text x="90" y="122" text-anchor="middle" class="d-title">Navegador</text>
+        <text x="90" y="142" text-anchor="middle" class="d-lbl">:80 / :443</text>
+        <path d="M160,126 L226,126" class="d-line" marker-end="url(#ah)"/>
+
+        <rect x="230" y="70" width="220" height="112" rx="14" class="d-net" style="stroke-dasharray:none"/>
+        <text x="340" y="100" text-anchor="middle" class="d-title">Ingress controller</text>
+        <text x="340" y="122" text-anchor="middle" class="d-sub">Traefik (u otro)</text>
+        <text x="340" y="148" text-anchor="middle" class="d-lbl">lee las reglas Ingress</text>
+        <text x="340" y="166" text-anchor="middle" class="d-lbl">y rutea</text>
+
+        <rect x="560" y="20" width="200" height="56" rx="12" class="d-net" style="stroke-dasharray:none;fill-opacity:.5"/>
+        <text x="660" y="44" text-anchor="middle" class="d-code" style="font-weight:700">svc/frontend</text>
+        <text x="660" y="64" text-anchor="middle" class="d-lbl">app.localhost /</text>
+        <rect x="560" y="98" width="200" height="56" rx="12" class="d-net" style="stroke-dasharray:none;fill-opacity:.5"/>
+        <text x="660" y="122" text-anchor="middle" class="d-code" style="font-weight:700">svc/chanchito</text>
+        <text x="660" y="142" text-anchor="middle" class="d-lbl">app.localhost /api</text>
+        <rect x="560" y="176" width="200" height="56" rx="12" class="d-net" style="stroke-dasharray:none;fill-opacity:.5"/>
+        <text x="660" y="200" text-anchor="middle" class="d-code" style="font-weight:700">svc/grafana</text>
+        <text x="660" y="220" text-anchor="middle" class="d-lbl">grafana.localhost</text>
+
+        <path d="M450,110 C505,110 505,48 556,48" class="d-line s-net" marker-end="url(#ah-net)"/>
+        <path d="M450,126 L556,126" class="d-line s-net" marker-end="url(#ah-net)"/>
+        <path d="M450,142 C505,142 505,204 556,204" class="d-line s-net" marker-end="url(#ah-net)"/>
+
+        <rect x="840" y="20" width="140" height="56" rx="12" class="d-cont"/><text x="910" y="53" text-anchor="middle" class="d-title" style="font-size:13.5px">Pods</text>
+        <rect x="840" y="98" width="140" height="56" rx="12" class="d-cont"/><text x="910" y="131" text-anchor="middle" class="d-title" style="font-size:13.5px">Pods</text>
+        <rect x="840" y="176" width="140" height="56" rx="12" class="d-cont"/><text x="910" y="209" text-anchor="middle" class="d-title" style="font-size:13.5px">Pods</text>
+        <path d="M760,48 L836,48" class="d-line s-cont" marker-end="url(#ah-cont)"/>
+        <path d="M760,126 L836,126" class="d-line s-cont" marker-end="url(#ah-cont)"/>
+        <path d="M760,204 L836,204" class="d-line s-cont" marker-end="url(#ah-cont)"/>
+      </svg>
+      </div>
+      <div class="callout info"><span class="ico">i</span><p>El objeto <code>Ingress</code> son solo <b>reglas</b>; sin un controller instalado no hace nada. El proyecto Kubernetes retiró <i>ingress-nginx</i> en 2026: para algo nuevo usá Traefik u otro controller, o directamente <b>Gateway API</b>.</p></div>
+    </div>
+  </section>
+
+  <!-- ================= CONFIG ================= -->
+  <section class="block" id="config">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-file)">4</div>
+      <div class="titles"><h2>ConfigMap y Secret: tres formas de usarlos</h2><p>Como variables sueltas, como todas las variables juntas, o como archivos.</p></div>
+    </div>
+    <div class="diagram">
+      <div class="svg-scroll">
+      <svg viewBox="0 0 1000 260" role="img" aria-label="ConfigMap y Secret llegan al contenedor como env, envFrom o archivos montados">
+        <rect x="20" y="30" width="200" height="86" rx="12" class="d-file"/>
+        <text x="120" y="60" text-anchor="middle" class="d-title">ConfigMap</text>
+        <text x="120" y="82" text-anchor="middle" class="d-lbl">MONGO_HOST=monguito</text>
+        <text x="120" y="100" text-anchor="middle" class="d-lbl">LOG_LEVEL=info</text>
+        <rect x="20" y="144" width="200" height="86" rx="12" class="d-bad"/>
+        <text x="120" y="174" text-anchor="middle" class="d-title">Secret</text>
+        <text x="120" y="196" text-anchor="middle" class="d-lbl">MONGO_USER=mati</text>
+        <text x="120" y="214" text-anchor="middle" class="d-lbl">MONGO_PASSWORD=***</text>
+
+        <rect x="320" y="20" width="300" height="62" rx="10" class="d-plain"/>
+        <text x="336" y="45" class="d-code" style="font-weight:700">env: valueFrom</text>
+        <text x="336" y="66" class="d-sub">una clave → una variable</text>
+        <rect x="320" y="99" width="300" height="62" rx="10" class="d-plain"/>
+        <text x="336" y="124" class="d-code" style="font-weight:700">envFrom</text>
+        <text x="336" y="145" class="d-sub">todas las claves → variables</text>
+        <rect x="320" y="178" width="300" height="62" rx="10" class="d-plain"/>
+        <text x="336" y="203" class="d-code" style="font-weight:700">volumes + volumeMounts</text>
+        <text x="336" y="224" class="d-sub">cada clave → un archivo</text>
+
+        <path d="M220,73 L316,51" class="d-line s-file" marker-end="url(#ah-file)"/>
+        <path d="M220,73 L316,130" class="d-line s-file" marker-end="url(#ah-file)"/>
+        <path d="M220,187 L316,138" class="d-line s-bad" marker-end="url(#ah)"/>
+        <path d="M220,187 L316,209" class="d-line s-bad" marker-end="url(#ah)"/>
+
+        <rect x="720" y="30" width="260" height="200" rx="14" class="d-cont"/>
+        <text x="850" y="60" text-anchor="middle" class="d-title">Contenedor</text>
+        <text x="740" y="94" class="d-lbl">process.env.MONGO_HOST</text>
+        <text x="740" y="116" class="d-lbl">process.env.MONGO_USER</text>
+        <text x="740" y="160" class="d-lbl">/etc/config/LOG_LEVEL</text>
+        <text x="740" y="182" class="d-lbl">/etc/secret/MONGO_PASSWORD</text>
+        <path d="M620,51 C670,51 670,98 716,98" class="d-line s-cont" marker-end="url(#ah-cont)"/>
+        <path d="M620,130 C670,130 670,112 716,112" class="d-line s-cont" marker-end="url(#ah-cont)"/>
+        <path d="M620,209 C670,209 670,172 716,172" class="d-line s-cont" marker-end="url(#ah-cont)"/>
+      </svg>
+      </div>
+    </div>
+    <div class="grid cols-3" style="margin-top:16px">
+      <div class="card t-file">
+        <h3>env (una variable)</h3>
+        <pre><code data-lang="yaml">env:
+  - name: MONGO_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: mongo-secret
+        key: MONGO_PASSWORD
+  - name: MONGO_HOST
+    valueFrom:
+      configMapKeyRef:
+        name: chanchito-config
+        key: MONGO_HOST</code></pre>
+      </div>
+      <div class="card t-file">
+        <h3>envFrom (todas)</h3>
+        <pre><code data-lang="yaml">envFrom:
+  - configMapRef:
+      name: chanchito-config
+  - secretRef:
+      name: mongo-secret</code></pre>
+        <div class="callout info"><span class="ico">i</span><p>Armar la URL con variables: <code>value: mongodb://$(MONGO_USER):$(MONGO_PASSWORD)@monguito:27017/miapp?authSource=admin</code> (declarando antes las variables).</p></div>
+      </div>
+      <div class="card t-file">
+        <h3>Como archivos</h3>
+        <pre><code data-lang="yaml">containers:
+  - name: chanchito
+    volumeMounts:
+      - name: config
+        mountPath: /etc/config
+        readOnly: true
+volumes:
+  - name: config
+    configMap:
+      name: chanchito-config</code></pre>
+      </div>
+    </div>
+    <div class="callout warn"><span class="ico">!</span><p>Si cambiás un ConfigMap/Secret, las <b>variables de entorno no se actualizan</b> solas: hacé <code>kubectl rollout restart deploy/chanchito</code>. Los archivos montados sí se actualizan (con algo de demora).</p></div>
+  </section>
+
+  <!-- ================= STORAGE ================= -->
+  <section class="block" id="storage">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-vol)">5</div>
+      <div class="titles"><h2>Almacenamiento: PVC → PV → disco</h2><p>El Pod pide, el cluster provee. Vos normalmente solo escribís el PVC.</p></div>
+    </div>
+    <div class="diagram">
+      <div class="svg-scroll">
+      <svg viewBox="0 0 1000 250" role="img" aria-label="El Pod monta un PVC; el PVC se enlaza a un PV que la StorageClass crea automáticamente sobre un disco real">
+        <rect x="20" y="60" width="190" height="110" rx="14" class="d-cont"/>
+        <text x="115" y="92" text-anchor="middle" class="d-title">Pod monguito</text>
+        <rect x="40" y="108" width="150" height="34" rx="8" class="d-plain"/>
+        <text x="115" y="130" text-anchor="middle" class="d-code" style="font-weight:700">/data/db</text>
+
+        <rect x="290" y="60" width="190" height="110" rx="14" class="d-vol" style="fill-opacity:.6"/>
+        <text x="385" y="92" text-anchor="middle" class="d-title">PVC</text>
+        <text x="385" y="114" text-anchor="middle" class="d-code">mongo-data</text>
+        <text x="385" y="136" text-anchor="middle" class="d-lbl">“quiero 1Gi RWO”</text>
+        <text x="385" y="156" text-anchor="middle" class="d-sub">lo escribís vos</text>
+
+        <rect x="560" y="60" width="190" height="110" rx="14" class="d-vol"/>
+        <text x="655" y="92" text-anchor="middle" class="d-title">PV</text>
+        <text x="655" y="114" text-anchor="middle" class="d-code">pvc-3f2a…</text>
+        <text x="655" y="136" text-anchor="middle" class="d-lbl">1Gi · Bound</text>
+        <text x="655" y="156" text-anchor="middle" class="d-sub">lo crea el cluster</text>
+
+        <path d="M830,78 a70,14 0 0 0 140,0 v74 a70,14 0 0 1 -140,0 z" class="d-vol"/>
+        <ellipse cx="900" cy="78" rx="70" ry="14" class="d-vol"/>
+        <text x="900" y="124" text-anchor="middle" class="d-title">Disco real</text>
+        <text x="900" y="144" text-anchor="middle" class="d-sub">carpeta local / EBS</text>
+
+        <path d="M210,115 L286,115" class="d-line s-vol" marker-end="url(#ah-vol)"/>
+        <text x="248" y="105" text-anchor="middle" class="d-lbl">monta</text>
+        <path d="M480,115 L556,115" class="d-line s-vol" marker-end="url(#ah-vol)"/>
+        <text x="518" y="105" text-anchor="middle" class="d-lbl">bind</text>
+        <path d="M750,115 L826,115" class="d-line s-vol" marker-end="url(#ah-vol)"/>
+
+        <rect x="560" y="196" width="190" height="44" rx="10" class="d-plain"/>
+        <text x="655" y="223" text-anchor="middle" class="d-code" style="font-weight:700">StorageClass</text>
+        <path d="M655,196 L655,174" class="d-line s-vol" style="stroke-dasharray:4 4" marker-end="url(#ah-vol)"/>
+        <text x="770" y="223" class="d-lbl">aprovisiona automáticamente</text>
+      </svg>
+      </div>
+    </div>
+    <div class="grid cols-2" style="margin-top:16px">
+      <div class="card t-vol">
+        <h3>accessModes</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Modo</th><th>Significado</th></tr></thead>
+            <tbody>
+              <tr><td><code>ReadWriteOnce</code> (RWO)</td><td>Lectura/escritura desde <b>un nodo</b>. Lo normal para DBs</td></tr>
+              <tr><td><code>ReadOnlyMany</code> (ROX)</td><td>Solo lectura desde varios nodos</td></tr>
+              <tr><td><code>ReadWriteMany</code> (RWX)</td><td>Escritura desde varios nodos (requiere NFS o similar)</td></tr>
+              <tr><td><code>ReadWriteOncePod</code></td><td>Un único Pod</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card t-vol">
+        <h3>Comandos y cuidados</h3>
+        <div class="cmd"><pre><code>kubectl get pvc
+kubectl get pv
+kubectl get storageclass</code></pre><div class="what">PVC debe quedar <b>Bound</b>. Si queda <b>Pending</b>: no hay StorageClass default o no hay espacio.</div></div>
+        <div class="callout warn"><span class="ico">!</span><p>Con <code>reclaimPolicy: Delete</code> (el default en la mayoría), <b>borrar el PVC borra los datos</b>. <code>kubectl delete -f k8s/</code> incluye el PVC si está en esa carpeta.</p></div>
+        <div class="callout info"><span class="ico">i</span><p><code>emptyDir</code>: volumen temporal que vive lo que vive el Pod (caché, archivos compartidos entre contenedores del mismo Pod).</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= STATEFULSET ================= -->
+  <section class="block" id="statefulset">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-img)">6</div>
+      <div class="titles"><h2>Deployment vs StatefulSet</h2><p>Para una base de datos con réplicas, StatefulSet.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card t-img">
+        <h3>Diferencias</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th></th><th>Deployment</th><th>StatefulSet</th></tr></thead>
+            <tbody>
+              <tr><td>Nombres de Pods</td><td>Aleatorios (<code>-x2k4</code>)</td><td>Fijos y ordenados (<code>-0</code>, <code>-1</code>)</td></tr>
+              <tr><td>Disco</td><td>Un PVC compartido</td><td>Un PVC <b>por réplica</b> (<code>volumeClaimTemplates</code>)</td></tr>
+              <tr><td>Orden de arranque</td><td>Todos a la vez</td><td>De a uno, en orden</td></tr>
+              <tr><td>DNS por Pod</td><td>No</td><td>Sí, con Service headless</td></tr>
+              <tr><td>Ideal para</td><td>APIs, frontends, workers</td><td>Mongo/Postgres con réplicas, Kafka</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout tip"><span class="ico">✓</span><p>Para aprender y en local, Mongo con <b>Deployment + PVC + 1 réplica</b> alcanza. En producción, mejor una base gestionada o un operator.</p></div>
+      </div>
+      <div class="card t-img">
+        <h3>StatefulSet mínimo</h3>
+        <pre class="big"><code data-lang="yaml">apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: monguito
+spec:
+  serviceName: monguito          # Service headless
+  replicas: 1
+  selector:
+    matchLabels: { app: monguito }
+  template:
+    metadata:
+      labels: { app: monguito }
+    spec:
+      containers:
+        - name: mongo
+          image: mongo:7
+          ports: [{ containerPort: 27017 }]
+          volumeMounts:
+            - { name: datos, mountPath: /data/db }
+  volumeClaimTemplates:          # un PVC por Pod
+    - metadata: { name: datos }
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources: { requests: { storage: 1Gi } }</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <a href="03-manifiestos.html">← Manifiestos YAML</a>
+    <a href="05-de-compose-a-k8s.html">Siguiente: De Compose a K8s →</a>
+  </footer>
+</main>
+</body>
+</html>

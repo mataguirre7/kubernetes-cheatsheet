@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Manifiestos YAML de Kubernetes: labels y selectors, Deployment, Service, ConfigMap, Secret, PVC, Ingress y probes.">
+<meta name="theme-color" content="#326ce5">
+<title>Kubernetes · Manifiestos YAML</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%8E%88%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/app.js"></script>
+</head>
+<body data-set="k8s" data-page="manifiestos">
+<header class="topbar"></header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="ah-cont" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-cont"/></marker>
+    <marker id="ah-net" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-net"/></marker>
+    <marker id="ah-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-bad"/></marker>
+  </defs>
+</svg>
+
+<main class="wrap">
+
+  <div class="hero">
+    <span class="eyebrow">Kubernetes · Cheatsheet 03</span>
+    <h1>Manifiestos YAML</h1>
+    <p class="lead">Cada objeto de Kubernetes se describe en YAML y se aplica con <code>kubectl apply -f</code>. Plantillas listas para copiar, usando tu app <code>chanchito</code>.</p>
+    <nav class="toc">
+      <a href="#anatomia">Anatomía</a>
+      <a href="#labels">Labels y selectors</a>
+      <a href="#deployment">Deployment</a>
+      <a href="#service">Service</a>
+      <a href="#config">ConfigMap y Secret</a>
+      <a href="#pvc">PVC</a>
+      <a href="#ingress">Ingress</a>
+      <a href="#probes">Probes y recursos</a>
+      <a href="#organizar">Organizar archivos</a>
+    </nav>
+  </div>
+
+  <!-- ================= ANATOMIA ================= -->
+  <section class="block" id="anatomia">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-file)">1</div>
+      <div class="titles"><h2>Anatomía de un manifiesto</h2><p>Siempre los mismos 4 bloques.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card t-file">
+        <h3>Los 4 campos raíz</h3>
+        <pre class="big"><code data-lang="yaml">apiVersion: apps/v1     # versión de la API para este tipo
+kind: Deployment        # QUÉ objeto es
+metadata:               # CÓMO se llama y cómo se etiqueta
+  name: chanchito
+  namespace: default
+  labels:
+    app: chanchito
+spec:                   # LO QUE QUERÉS (estado deseado)
+  replicas: 2
+  # ...
+# status:               # lo que HAY: lo completa Kubernetes, no se escribe</code></pre>
+        <div class="callout info"><span class="ico">i</span><p>Indentación con <b>espacios</b> (2 es lo habitual). Un error de sangría cambia el significado sin dar error de sintaxis.</p></div>
+      </div>
+      <div class="card t-file">
+        <h3>apiVersion de cada kind</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>kind</th><th>apiVersion</th></tr></thead>
+            <tbody>
+              <tr><td>Pod, Service, ConfigMap, Secret, PersistentVolumeClaim, Namespace</td><td><code>v1</code></td></tr>
+              <tr><td>Deployment, StatefulSet, DaemonSet, ReplicaSet</td><td><code>apps/v1</code></td></tr>
+              <tr><td>Job, CronJob</td><td><code>batch/v1</code></td></tr>
+              <tr><td>Ingress</td><td><code>networking.k8s.io/v1</code></td></tr>
+              <tr><td>HorizontalPodAutoscaler</td><td><code>autoscaling/v2</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout tip"><span class="ico">✓</span><p>¿No te acordás? <code>kubectl explain &lt;kind&gt;</code> muestra la versión y los campos. O generá la base con <code>--dry-run=client -o yaml</code>.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= LABELS ================= -->
+  <section class="block" id="labels">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-net)">2</div>
+      <div class="titles"><h2>Labels y selectors: cómo se encuentran los objetos</h2><p>Nada se conecta por nombre: se conecta por <b>labels</b>. Si no coinciden, no funciona (y no da error).</p></div>
+    </div>
+    <div class="diagram">
+      <div class="svg-scroll">
+      <svg viewBox="0 0 1000 300" role="img" aria-label="El selector del Deployment debe coincidir con los labels del template; el selector del Service elige los Pods con app chanchito y deja afuera al de monguito">
+        <!-- deployment -->
+        <rect x="20" y="20" width="330" height="244" rx="14" class="d-img" style="fill-opacity:.55"/>
+        <text x="40" y="46" class="d-title">Deployment <tspan class="d-code">chanchito</tspan></text>
+        <text x="40" y="74" class="d-code">selector:</text>
+        <text x="56" y="95" class="d-code">matchLabels:</text>
+        <rect x="64" y="100" width="134" height="22" rx="6" class="d-ok"/>
+        <text x="72" y="116" class="d-code" style="font-weight:700">app: chanchito</text>
+        <text x="40" y="146" class="d-code">template:</text>
+        <text x="56" y="167" class="d-code">metadata:</text>
+        <text x="72" y="188" class="d-code">labels:</text>
+        <rect x="80" y="193" width="134" height="22" rx="6" class="d-ok"/>
+        <text x="88" y="209" class="d-code" style="font-weight:700">app: chanchito</text>
+        <text x="56" y="242" class="d-code">spec: containers: …</text>
+        <path d="M202,111 C262,111 262,204 218,204" class="d-line s-ok" style="stroke-dasharray:4 4"/>
+        <text x="258" y="162" class="d-lbl f-ok">iguales</text>
+
+        <!-- pods -->
+        <rect x="440" y="36" width="210" height="46" rx="12" class="d-cont"/>
+        <text x="456" y="65" class="d-title">Pod</text>
+        <text x="638" y="65" text-anchor="end" class="d-code">app: chanchito</text>
+        <rect x="440" y="96" width="210" height="46" rx="12" class="d-cont"/>
+        <text x="456" y="125" class="d-title">Pod</text>
+        <text x="638" y="125" text-anchor="end" class="d-code">app: chanchito</text>
+        <rect x="440" y="156" width="210" height="46" rx="12" class="d-cont"/>
+        <text x="456" y="185" class="d-title">Pod</text>
+        <text x="638" y="185" text-anchor="end" class="d-code">app: chanchito</text>
+        <rect x="440" y="216" width="210" height="46" rx="12" class="d-box" style="stroke-dasharray:5 4"/>
+        <text x="456" y="245" class="d-title">Pod</text>
+        <text x="638" y="245" text-anchor="end" class="d-code">app: monguito</text>
+
+        <path d="M214,211 L350,211" class="d-line s-cont"/>
+        <path d="M350,211 C395,211 395,59 436,59" class="d-line s-cont" marker-end="url(#ah-cont)"/>
+        <path d="M350,211 C395,211 395,119 436,119" class="d-line s-cont" marker-end="url(#ah-cont)"/>
+        <path d="M350,211 C395,211 395,179 436,179" class="d-line s-cont" marker-end="url(#ah-cont)"/>
+        <text x="395" y="282" text-anchor="middle" class="d-lbl">crea Pods con ese label</text>
+
+        <!-- service -->
+        <rect x="730" y="20" width="250" height="160" rx="14" class="d-net" style="stroke-dasharray:none"/>
+        <text x="750" y="46" class="d-title">Service <tspan class="d-code">chanchito</tspan></text>
+        <text x="750" y="76" class="d-code">selector:</text>
+        <rect x="758" y="82" width="134" height="22" rx="6" class="d-ok"/>
+        <text x="766" y="98" class="d-code" style="font-weight:700">app: chanchito</text>
+        <text x="750" y="132" class="d-code">port: 80</text>
+        <text x="750" y="154" class="d-code">targetPort: 3000</text>
+
+        <path d="M758,93 C700,93 700,59 654,59" class="d-line s-net" marker-end="url(#ah-net)"/>
+        <path d="M758,93 C700,93 700,119 654,119" class="d-line s-net" marker-end="url(#ah-net)"/>
+        <path d="M758,93 C700,93 700,179 654,179" class="d-line s-net" marker-end="url(#ah-net)"/>
+        <path d="M758,96 C712,96 712,239 654,239" class="d-line s-bad" style="stroke-dasharray:5 5" marker-end="url(#ah-bad)"/>
+        <text x="720" y="262" class="d-lbl f-bad">✕ no coincide, no recibe tráfico</text>
+      </svg>
+      </div>
+      <div class="grid cols-3" style="margin-top:12px">
+        <div class="callout info"><span class="ico">1</span><p><code>selector.matchLabels</code> del Deployment tiene que ser <b>igual</b> a <code>template.metadata.labels</code>. Si no, <code>apply</code> lo rechaza.</p></div>
+        <div class="callout info"><span class="ico">2</span><p>El <code>selector</code> del Service elige a qué Pods mandar tráfico. Verificalo con <code>kubectl get endpoints chanchito</code>.</p></div>
+        <div class="callout warn"><span class="ico">!</span><p>El selector de un Deployment <b>no se puede cambiar</b> después de creado: hay que borrarlo y recrearlo.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DEPLOYMENT ================= -->
+  <section class="block" id="deployment">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-img)">3</div>
+      <div class="titles"><h2>Deployment</h2><p>Tu app corriendo con N réplicas.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card t-img">
+        <h3>chanchito-deployment.yaml</h3>
+        <div class="code-label"><span class="file">k8s/chanchito-deployment.yaml</span></div>
+        <pre class="big"><code data-lang="yaml">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chanchito
+  labels:
+    app: chanchito
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: chanchito            # debe = template.metadata.labels
+  template:                     # molde de cada Pod
+    metadata:
+      labels:
+        app: chanchito
+    spec:
+      containers:
+        - name: chanchito
+          image: chanchito:1    # tag fijo, nunca latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: production
+          envFrom:
+            - configMapRef:
+                name: chanchito-config
+            - secretRef:
+                name: mongo-secret
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits:   { memory: 256Mi }
+          readinessProbe:
+            httpGet: { path: /, port: 3000 }
+            initialDelaySeconds: 5</code></pre>
+      </div>
+      <div class="card t-img">
+        <h3>Campo por campo</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Campo</th><th>Qué es</th></tr></thead>
+            <tbody>
+              <tr><td><code>replicas</code></td><td>Cuántos Pods iguales</td></tr>
+              <tr><td><code>selector</code></td><td>Qué Pods “son suyos” (por label)</td></tr>
+              <tr><td><code>template</code></td><td>El molde del Pod: labels + contenedores</td></tr>
+              <tr><td><code>containers[].image</code></td><td>Imagen (≈ <code>image:</code> del compose)</td></tr>
+              <tr><td><code>imagePullPolicy</code></td><td><code>IfNotPresent</code>: usa la local si existe. <code>Always</code>: siempre baja. <code>Never</code>: solo local</td></tr>
+              <tr><td><code>containerPort</code></td><td>Puerto donde escucha la app (informativo, como <code>EXPOSE</code>)</td></tr>
+              <tr><td><code>env</code></td><td>Variables sueltas</td></tr>
+              <tr><td><code>envFrom</code></td><td>Todas las claves de un ConfigMap/Secret como variables</td></tr>
+              <tr><td><code>resources</code></td><td>CPU/RAM reservada (<code>requests</code>) y máxima (<code>limits</code>)</td></tr>
+              <tr><td><code>readinessProbe</code></td><td>Cuándo el Pod está listo para recibir tráfico</td></tr>
+              <tr><td><code>strategy</code></td><td><code>RollingUpdate</code> (por defecto) o <code>Recreate</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout warn"><span class="ico">!</span><p>Con <code>image: chanchito:latest</code> Kubernetes usa <code>imagePullPolicy: Always</code> y va a intentar bajarla de Docker Hub → <code>ImagePullBackOff</code> con imágenes locales. Usá tags con versión.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SERVICE ================= -->
+  <section class="block" id="service">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-net)">4</div>
+      <div class="titles"><h2>Service</h2><p>Nombre DNS e IP fija delante de los Pods. Detalle de tipos y puertos en <a href="04-red-config-datos.html#services">Red, config y datos</a>.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card t-net">
+        <h3>ClusterIP (interno, por defecto)</h3>
+        <div class="code-label"><span class="file">k8s/chanchito-service.yaml</span></div>
+        <pre class="big"><code data-lang="yaml">apiVersion: v1
+kind: Service
+metadata:
+  name: chanchito        # nombre DNS: http://chanchito
+spec:
+  type: ClusterIP
+  selector:
+    app: chanchito       # a qué Pods manda tráfico
+  ports:
+    - port: 80           # puerto del Service
+      targetPort: 3000   # puerto del contenedor</code></pre>
+      </div>
+      <div class="card t-net">
+        <h3>NodePort (accesible desde tu PC)</h3>
+        <pre class="big"><code data-lang="yaml">apiVersion: v1
+kind: Service
+metadata:
+  name: chanchito
+spec:
+  type: NodePort
+  selector:
+    app: chanchito
+  ports:
+    - port: 80
+      targetPort: 3000
+      nodePort: 30080    # 30000-32767 → localhost:30080</code></pre>
+        <div class="callout info"><span class="ico">i</span><p>En Docker Desktop entrás por <code>http://localhost:30080</code>. En minikube: <code>minikube service chanchito --url</code>.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CONFIG ================= -->
+  <section class="block" id="config">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-file)">5</div>
+      <div class="titles"><h2>ConfigMap y Secret</h2><p>Sacan la configuración de la imagen (≈ <code>environment:</code> / <code>.env</code> del compose).</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card t-file">
+        <h3>ConfigMap</h3>
+        <pre class="big"><code data-lang="yaml">apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: chanchito-config
+data:
+  MONGO_HOST: monguito          # nombre del Service de Mongo
+  MONGO_DB: miapp
+  LOG_LEVEL: info</code></pre>
+      </div>
+      <div class="card t-file">
+        <h3>Secret</h3>
+        <pre class="big"><code data-lang="yaml">apiVersion: v1
+kind: Secret
+metadata:
+  name: mongo-secret
+type: Opaque
+stringData:                     # texto plano; se guarda en base64
+  MONGO_USER: mati
+  MONGO_PASSWORD: &lt;password&gt;</code></pre>
+        <div class="cmd"><pre><code>kubectl create secret generic mongo-secret \
+  --from-literal=MONGO_USER=mati \
+  --from-literal=MONGO_PASSWORD=&lt;password&gt;</code></pre><div class="what">Alternativa sin archivo: así la contraseña no queda en el repo.</div></div>
+        <div class="callout bad"><span class="ico">✕</span><p>No subas YAML de Secrets con valores reales a git: base64 <b>no es cifrado</b>.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PVC ================= -->
+  <section class="block" id="pvc">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-vol)">6</div>
+      <div class="titles"><h2>PersistentVolumeClaim</h2><p>Disco que sobrevive a los Pods (≈ <code>volumes: mongo-data:</code>).</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card t-vol">
+        <h3>Pedir el disco</h3>
+        <pre class="big"><code data-lang="yaml">apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongo-data
+spec:
+  accessModes:
+    - ReadWriteOnce        # un nodo a la vez
+  resources:
+    requests:
+      storage: 1Gi
+  # storageClassName: standard   # opcional: usa la default</code></pre>
+      </div>
+      <div class="card t-vol">
+        <h3>Montarlo en el contenedor</h3>
+        <pre class="big"><code data-lang="yaml">spec:
+  template:
+    spec:
+      containers:
+        - name: monguito
+          image: mongo:7
+          volumeMounts:
+            - name: datos          # nombre interno
+              mountPath: /data/db  # mismo path que en Docker
+      volumes:
+        - name: datos
+          persistentVolumeClaim:
+            claimName: mongo-data  # el PVC</code></pre>
+        <div class="callout info"><span class="ico">i</span><p>Dos pasos: <code>volumes</code> (a nivel Pod) declara de dónde sale; <code>volumeMounts</code> (en el contenedor) dice dónde se monta. Se unen por <code>name</code>.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= INGRESS ================= -->
+  <section class="block" id="ingress">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-net)">7</div>
+      <div class="titles"><h2>Ingress</h2><p>Entrada HTTP por dominio/path. Requiere un Ingress controller instalado (ej. Traefik).</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card t-net">
+        <h3>chanchito.localhost → Service chanchito</h3>
+        <pre class="big"><code data-lang="yaml">apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: chanchito
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: chanchito.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: chanchito
+                port:
+                  number: 80</code></pre>
+      </div>
+      <div class="card t-net">
+        <h3>Notas</h3>
+        <ul>
+          <li><code>*.localhost</code> resuelve a tu PC sin tocar el archivo <code>hosts</code> en la mayoría de navegadores.</li>
+          <li>Varios <code>paths</code> o <code>hosts</code> → varios Services detrás de una sola entrada (ej. <code>/api</code> al backend y <code>/</code> al frontend).</li>
+          <li>Para HTTPS se agrega <code>tls:</code> con un Secret de tipo <code>kubernetes.io/tls</code>.</li>
+          <li><b>Gateway API</b> (<code>Gateway</code> + <code>HTTPRoute</code>) es el reemplazo moderno de Ingress; el controller <i>ingress-nginx</i> fue retirado en 2026.</li>
+        </ul>
+        <div class="cmd"><pre><code>kubectl get ingress
+kubectl get ingressclass</code></pre><div class="what">Ver Ingress y qué controller hay instalado.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PROBES ================= -->
+  <section class="block" id="probes">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--ok)">8</div>
+      <div class="titles"><h2>Probes y recursos</h2><p>Cómo sabe Kubernetes si tu app está viva y cuánto le puede dar.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card t-ok">
+        <h3>Probes</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Probe</th><th>Si falla…</th></tr></thead>
+            <tbody>
+              <tr><td><code>readinessProbe</code></td><td>Se saca el Pod del Service (no recibe tráfico). No lo reinicia.</td></tr>
+              <tr><td><code>livenessProbe</code></td><td><b>Reinicia</b> el contenedor.</td></tr>
+              <tr><td><code>startupProbe</code></td><td>Da tiempo extra a apps lentas antes de evaluar las otras dos.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <pre style="margin-top:10px"><code data-lang="yaml">livenessProbe:
+  httpGet: { path: /health, port: 3000 }   # o tcpSocket / exec
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  failureThreshold: 3</code></pre>
+        <div class="callout warn"><span class="ico">!</span><p>Una <code>livenessProbe</code> mal configurada (path inexistente, poco delay) mata la app en loop → <code>CrashLoopBackOff</code>.</p></div>
+      </div>
+      <div class="card t-ok">
+        <h3>Recursos</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Campo</th><th>Significado</th></tr></thead>
+            <tbody>
+              <tr><td><code>requests.cpu</code></td><td>CPU reservada para ubicar el Pod. <code>100m</code> = 0,1 núcleo</td></tr>
+              <tr><td><code>requests.memory</code></td><td>RAM reservada. <code>128Mi</code></td></tr>
+              <tr><td><code>limits.cpu</code></td><td>Tope de CPU (si lo pasa, se ralentiza)</td></tr>
+              <tr><td><code>limits.memory</code></td><td>Tope de RAM (si lo pasa → <code>OOMKilled</code>)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout info"><span class="ico">i</span><p>Si los <code>requests</code> son más de lo que tiene libre algún nodo, el Pod queda <code>Pending</code>.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ORGANIZAR ================= -->
+  <section class="block" id="organizar">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-comp)">9</div>
+      <div class="titles"><h2>Organizar los archivos</h2><p>Un archivo por objeto o varios en uno separados con <code>---</code>.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card t-comp">
+        <h3>Estructura sugerida</h3>
+        <pre class="big"><code data-lang="plain">pruebas-docker/
+├── Dockerfile
+├── docker-compose.yml
+└── k8s/
+    ├── chanchito-config.yaml      # ConfigMap
+    ├── mongo-secret.yaml          # Secret (fuera de git)
+    ├── mongo-pvc.yaml
+    ├── monguito.yaml              # Deployment + Service
+    ├── chanchito.yaml             # Deployment + Service
+    └── ingress.yaml</code></pre>
+        <div class="cmd"><pre><code>kubectl apply -f k8s/</code></pre><div class="what">Aplica la carpeta entera. Si algo depende de otro objeto, Kubernetes reintenta hasta que exista.</div></div>
+      </div>
+      <div class="card t-comp">
+        <h3>Varios objetos en un archivo</h3>
+        <pre class="big"><code data-lang="yaml">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: monguito
+# ...
+---                     # separador de documentos
+apiVersion: v1
+kind: Service
+metadata:
+  name: monguito
+# ...</code></pre>
+        <div class="callout tip"><span class="ico">✓</span><p>Juntá en un archivo lo que va siempre unido (Deployment + su Service). La migración completa está en <a href="05-de-compose-a-k8s.html">De Compose a K8s</a>.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <a href="02-kubectl.html">← kubectl</a>
+    <a href="04-red-config-datos.html">Siguiente: Red, config y datos →</a>
+  </footer>
+</main>
+</body>
+</html>
