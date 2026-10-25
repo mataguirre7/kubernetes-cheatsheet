@@ -114,7 +114,7 @@ a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
 /* sin ligaduras: que "--name" no se convierta en "—name" */
-code, pre, kbd, svg .mono, .d-code, .d-lbl {
+code, pre, kbd, svg .mono, .d-code, .d-lbl, .chips span {
   font-family: var(--mono);
   font-variant-ligatures: none;
   font-feature-settings: "liga" 0, "calt" 0;
