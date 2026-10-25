@@ -38,6 +38,38 @@
     </nav>
   </div>
 
+  <section class="terms-box">
+    <h2>Términos de esta página</h2>
+    <p>Kubernetes usa muchas palabras nuevas. Estas son las que vas a ver en todas las hojas; cada una se explica abajo.</p>
+    <dl class="terms">
+      <dt>Kubernetes (K8s)</dt><dd>Un sistema que corre contenedores en un grupo de máquinas y los mantiene funcionando: los reparte, los reinicia si fallan, los escala y los conecta. “K8s” es la abreviatura (K + 8 letras + s).</dd>
+      <dt>Orquestador</dt><dd>Un programa que coordina muchos contenedores en muchas máquinas. Kubernetes es el más usado.</dd>
+      <dt>Cluster</dt><dd>El conjunto de máquinas que maneja Kubernetes, vistas como una sola.</dd>
+      <dt>Nodo (node)</dt><dd>Cada máquina del cluster (física o virtual). En tu PC con Docker Desktop hay un solo nodo.</dd>
+      <dt>Control plane</dt><dd>La parte del cluster que toma las decisiones: guarda lo que pediste y ordena a los nodos qué correr.</dd>
+      <dt>Pod</dt><dd>La unidad mínima de Kubernetes: uno o varios contenedores que corren juntos, con una IP propia.</dd>
+      <dt>Deployment</dt><dd>El objeto que escribís para decir “quiero N copias de este Pod con esta imagen”. Kubernetes las crea y las mantiene.</dd>
+      <dt>Réplica</dt><dd>Cada copia idéntica de un Pod. Varias réplicas reparten el trabajo y siguen funcionando si una falla.</dd>
+      <dt>Service</dt><dd>Un nombre y una dirección fijos para llegar a un grupo de Pods, aunque los Pods cambien.</dd>
+      <dt>Namespace</dt><dd>Una “carpeta” dentro del cluster para agrupar y separar recursos.</dd>
+      <dt>Manifiesto</dt><dd>Un archivo YAML que describe uno o más objetos de Kubernetes (Deployment, Service…).</dd>
+      <dt>kubectl</dt><dd>El comando para hablar con el cluster (se pronuncia “cube-control”).</dd>
+      <dt>Estado deseado</dt><dd>Lo que declarás en los manifiestos. Kubernetes compara todo el tiempo lo que hay con lo deseado y corrige las diferencias.</dd>
+    </dl>
+  </section>
+
+  <section class="block" id="que-es">
+    <div class="section-head">
+      <div class="num">0</div>
+      <div class="titles"><h2>Qué es Kubernetes y por qué existe</h2></div>
+    </div>
+    <div class="explain">
+      <p>Con Docker corrés contenedores en <b>una</b> computadora. Eso alcanza para desarrollar, pero una aplicación real en producción necesita más: seguir funcionando si un contenedor se cae, repartir la carga entre varias copias, actualizarse sin cortar el servicio y aprovechar varias máquinas. Hacer todo eso a mano es imposible a escala.</p>
+      <p>Kubernetes automatiza ese trabajo. Le das un <b>manifiesto</b> que dice, por ejemplo, “quiero 3 copias de la imagen <code>chanchito:1.0.0</code>, accesibles en el puerto 80”, y Kubernetes decide en qué máquina corre cada una, las vigila y las reemplaza si fallan. Vos describís el <b>qué</b>; Kubernetes se ocupa del <b>cómo</b>.</p>
+      <p><b>¿Lo necesito?</b> Para aprender y para apps chicas, Docker Compose suele alcanzar. Kubernetes conviene cuando hay varias réplicas, varios servicios o varias máquinas. Para practicar no hace falta un servidor: Docker Desktop trae un Kubernetes de un nodo (ver <a href="02-kubectl.html#local">Cluster local</a>).</p>
+    </div>
+  </section>
+
   <!-- ================= ARQUITECTURA ================= -->
   <section class="block" id="arquitectura">
     <div class="section-head">

@@ -27,7 +27,7 @@
   <div class="hero">
     <span class="eyebrow">Kubernetes · Cheatsheet 05</span>
     <h1>De Docker Compose a Kubernetes</h1>
-    <p class="lead">Tu proyecto <code>pruebas-docker</code> (chanchito + monguito) llevado a un cluster local, paso a paso. Mismo <code>app.js</code>, misma imagen.</p>
+    <p class="lead">Una app de ejemplo que ya funciona con Docker Compose (una API Node llamada <code>chanchito</code> y su base MongoDB llamada <code>monguito</code>) llevada a un cluster de Kubernetes local, paso a paso. Se usan el mismo código y la misma imagen: solo cambia quién corre los contenedores.</p>
     <nav class="toc">
       <a href="#mapa">Mapa compose → objetos</a>
       <a href="#pasos">Paso a paso</a>
@@ -35,6 +35,20 @@
       <a href="#dia-a-dia">Día a día</a>
     </nav>
   </div>
+
+  <section class="terms-box">
+    <h2>Antes de empezar</h2>
+    <p>Qué necesitás y qué términos aparecen. Si alguno no te suena, está en <a href="01-conceptos.html">Conceptos</a> o en <a href="04-red-config-datos.html">Red, config y datos</a>.</p>
+    <dl class="terms">
+      <dt>Requisitos</dt><dd>Docker Desktop con Kubernetes activado (ver <a href="02-kubectl.html#local">Cluster local</a>) y la app con su <code>Dockerfile</code> y <code>docker-compose.yml</code>.</dd>
+      <dt>Migrar</dt><dd>Pasar la app de una plataforma a otra. Acá: de Compose a Kubernetes, traduciendo cada parte del YAML de Compose a objetos de Kubernetes.</dd>
+      <dt>Imagen local</dt><dd>Una imagen construida en tu PC con <code>docker build</code>, que no está en ningún registry. El Kubernetes de Docker Desktop puede usarla directamente.</dd>
+      <dt>imagePullPolicy</dt><dd>Cuándo descarga Kubernetes la imagen. <code>IfNotPresent</code> = solo si no la tiene; necesario para usar imágenes locales.</dd>
+      <dt>Rolling update</dt><dd>Actualizar a una versión nueva reemplazando los Pods de a uno, sin cortar el servicio.</dd>
+      <dt>strategy: Recreate</dt><dd>Lo contrario: primero borra el Pod viejo y después crea el nuevo. Se usa para la base de datos, para que dos Pods no usen el mismo disco a la vez.</dd>
+      <dt>readinessProbe</dt><dd>Un chequeo que dice cuándo un Pod está listo para recibir tráfico.</dd>
+    </dl>
+  </section>
 
   <!-- ================= MAPA ================= -->
   <section class="block" id="mapa">
@@ -107,7 +121,7 @@
   <section class="block" id="pasos" data-search>
     <div class="section-head">
       <div class="num" style="--tone:var(--ok)">2</div>
-      <div class="titles"><h2>Paso a paso</h2><p>Desde la carpeta <code>pruebas-docker</code>, con el Kubernetes de Docker Desktop (variantes para minikube/kind al costado).</p></div>
+      <div class="titles"><h2>Paso a paso</h2><p>Desde la carpeta del proyecto (la que tiene el <code>Dockerfile</code>), con el Kubernetes de Docker Desktop (variantes para minikube/kind al costado).</p></div>
     </div>
     <div class="grid cols-2">
       <div class="card t-ok">
@@ -158,7 +172,7 @@ kubectl port-forward svc/chanchito 3000:80</code></pre><div class="what">En kind
   <section class="block" id="manifiestos">
     <div class="section-head">
       <div class="num" style="--tone:var(--c-img)">3</div>
-      <div class="titles"><h2>Los manifiestos completos</h2><p>Creá la carpeta <code>k8s/</code> en <code>pruebas-docker</code> con estos dos archivos.</p></div>
+      <div class="titles"><h2>Los manifiestos completos</h2><p>Creá una carpeta <code>k8s/</code> dentro del proyecto con estos dos archivos.</p></div>
     </div>
     <div class="grid cols-2">
       <div class="card t-img">

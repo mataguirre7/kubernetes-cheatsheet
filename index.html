@@ -16,9 +16,9 @@
 <main class="wrap">
 
   <div class="hero">
-    <span class="eyebrow">Referencia personal</span>
+    <span class="eyebrow">Referencia y guía</span>
     <h1>Kubernetes Cheatsheets</h1>
-    <p class="lead">Conceptos, <code>kubectl</code>, manifiestos y diagnóstico, con tu app <code>chanchito</code> + <code>monguito</code> como ejemplo. Si venís de Docker, empezá por <a href="05-de-compose-a-k8s.html">De Compose a K8s</a>.</p>
+    <p class="lead">Kubernetes corre contenedores en un grupo de máquinas y los mantiene funcionando: los reinicia si fallan, los escala y los actualiza sin cortes. Estas hojas lo explican desde cero (conviene saber lo básico de Docker antes) y usan como ejemplo una app Node llamada <code>chanchito</code> con su base MongoDB <code>monguito</code>.</p>
     <div class="toolbar">
       <label class="search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -28,8 +28,27 @@
     </div>
   </div>
 
+  <!-- ================= RUTA ================= -->
+  <section class="block">
+    <div class="section-head">
+      <div class="titles"><h2>Por dónde empezar</h2><p>Si nunca usaste Kubernetes, seguí este orden.</p></div>
+    </div>
+    <div class="card">
+      <ol class="steps">
+        <li><a href="01-conceptos.html"><b>Conceptos</b></a>: qué es un cluster, un Pod, un Deployment y un Service, y por qué Kubernetes trabaja con “estado deseado”.</li>
+        <li><a href="02-kubectl.html#local"><b>Cluster local</b></a>: activar el Kubernetes de Docker Desktop y comprobar que responde.</li>
+        <li><a href="05-de-compose-a-k8s.html"><b>De Compose a K8s</b></a>: llevar una app real al cluster, paso a paso, con todos los archivos.</li>
+        <li><a href="03-manifiestos.html"><b>Manifiestos</b></a> y <a href="04-red-config-datos.html"><b>Red, config y datos</b></a>: entender cada parte de esos archivos.</li>
+        <li><a href="02-kubectl.html"><b>kubectl</b></a> y <a href="06-problemas.html"><b>Problemas comunes</b></a>: para consultar cuando los necesites.</li>
+      </ol>
+    </div>
+  </section>
+
   <!-- ================= HOJAS ================= -->
   <section class="block">
+    <div class="section-head">
+      <div class="titles"><h2>Las hojas</h2></div>
+    </div>
     <div class="grid cols-3">
       <a class="card sheet-card t-comp" href="01-conceptos.html">
         <div class="top">
@@ -68,7 +87,7 @@
           <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></div>
           <div><span class="tag">05</span><h3>De Compose a K8s</h3></div>
         </div>
-        <p>Tu <code>pruebas-docker</code> migrado: mapa línea por línea, pasos y manifiestos completos.</p>
+        <p>Una app Node + MongoDB que funciona con Compose, llevada al cluster: mapa línea por línea, pasos y manifiestos completos.</p>
         <div class="chips"><span>chanchito</span><span>monguito</span><span>k8s/</span></div>
       </a>
       <a class="card sheet-card t-bad" href="06-problemas.html">
@@ -167,7 +186,7 @@
   <p class="empty">Nada por acá. Probá en <a href="02-kubectl.html">kubectl</a> o en <a href="06-problemas.html">Problemas comunes</a>.</p>
 
   <footer class="foot">
-    <span>Kubernetes Cheatsheets · ejemplos basados en <code>pruebas-docker</code></span>
+    <span>Kubernetes Cheatsheets</span>
     <a href="01-conceptos.html">Empezar por Conceptos →</a>
   </footer>
 </main>

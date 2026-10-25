@@ -48,6 +48,24 @@
     </nav>
   </div>
 
+  <section class="terms-box">
+    <h2>Qué significa cada STATUS de un Pod</h2>
+    <p>Es la columna que muestra <code>kubectl get pods</code>, y casi siempre te dice por dónde buscar.</p>
+    <dl class="terms">
+      <dt>Pending</dt><dd>Kubernetes todavía no encontró un nodo donde ubicarlo (faltan recursos o un disco).</dd>
+      <dt>ContainerCreating</dt><dd>Se está preparando: descargando la imagen o montando volúmenes. Si dura mucho, algo traba.</dd>
+      <dt>Running</dt><dd>El contenedor está corriendo. Mirá también la columna <b>READY</b>: <code>1/1</code> = listo para recibir tráfico.</dd>
+      <dt>Completed</dt><dd>El proceso terminó bien (normal en Jobs, raro en una app que debería seguir corriendo).</dd>
+      <dt>Error</dt><dd>El proceso terminó con un error.</dd>
+      <dt>CrashLoopBackOff</dt><dd>Arranca, se cae, y Kubernetes espera cada vez más antes de reintentar. El problema está en la app o en su configuración.</dd>
+      <dt>ImagePullBackOff / ErrImagePull</dt><dd>No pudo descargar la imagen (nombre o tag mal escritos, imagen privada o solo local).</dd>
+      <dt>CreateContainerConfigError</dt><dd>Falta algo que el Pod referencia, típicamente un Secret o ConfigMap.</dd>
+      <dt>Terminating</dt><dd>Se está borrando.</dd>
+      <dt>RESTARTS</dt><dd>Cuántas veces se reinició el contenedor. Un número que sube = algo lo está matando.</dd>
+      <dt>Events</dt><dd>Los avisos que el cluster registra sobre un objeto. Aparecen al final de <code>kubectl describe pod</code> y explican la mayoría de los problemas.</dd>
+    </dl>
+  </section>
+
   <!-- ================= DIAGNOSTICO ================= -->
   <section class="block" id="diagnostico">
     <div class="section-head">

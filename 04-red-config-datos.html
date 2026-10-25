@@ -39,6 +39,23 @@
     </nav>
   </div>
 
+  <section class="terms-box">
+    <h2>Términos de esta página</h2>
+    <dl class="terms">
+      <dt>Service</dt><dd>Una dirección fija (IP y nombre) delante de un grupo de Pods. Hace falta porque los Pods se crean y destruyen y cambian de IP.</dd>
+      <dt>ClusterIP / NodePort / LoadBalancer</dt><dd>Los tipos de Service según desde dónde se accede: solo dentro del cluster, desde un puerto de cada máquina, o desde internet con una IP externa.</dd>
+      <dt>Puerto / targetPort / nodePort</dt><dd>El puerto del Service, el puerto del contenedor al que reenvía, y el puerto abierto en la máquina (solo NodePort).</dd>
+      <dt>Endpoints</dt><dd>La lista de IPs de los Pods a los que un Service reparte el tráfico en este momento.</dd>
+      <dt>DNS</dt><dd>El “directorio” que traduce nombres a direcciones. En el cluster, cada Service tiene un nombre DNS automático.</dd>
+      <dt>Ingress</dt><dd>Reglas para recibir tráfico web (HTTP/HTTPS) desde afuera y repartirlo por dominio o ruta entre varios Services.</dd>
+      <dt>Ingress controller</dt><dd>El programa que aplica esas reglas (Traefik, por ejemplo). Sin él, un Ingress no hace nada.</dd>
+      <dt>ConfigMap / Secret</dt><dd>Objetos para guardar configuración (ConfigMap) y datos sensibles como contraseñas (Secret), separados de la imagen.</dd>
+      <dt>PersistentVolumeClaim (PVC)</dt><dd>Un pedido de disco (“quiero 1 GB”). El cluster lo cumple creando un <b>PersistentVolume (PV)</b>, el disco real.</dd>
+      <dt>StorageClass</dt><dd>El “proveedor” de discos del cluster: sabe crear PVs automáticamente cuando aparece un PVC.</dd>
+      <dt>StatefulSet</dt><dd>Como un Deployment, pero para apps con datos propios por réplica (bases de datos): nombres fijos y un disco para cada una.</dd>
+    </dl>
+  </section>
+
   <!-- ================= SERVICES ================= -->
   <section class="block" id="services">
     <div class="section-head">

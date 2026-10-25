@@ -24,7 +24,7 @@
   <div class="hero">
     <span class="eyebrow">Kubernetes · Cheatsheet 02</span>
     <h1>kubectl</h1>
-    <p class="lead">La CLI para hablar con el cluster. Patrón general: <code>kubectl &lt;verbo&gt; &lt;tipo&gt; &lt;nombre&gt; [-n namespace] [flags]</code>. Los valores en <span style="color:#ff8fc8;font-family:var(--mono)">&lt;rosa&gt;</span> se reemplazan.</p>
+    <p class="lead"><code>kubectl</code> es el comando para hablar con el cluster: consultar qué hay, crear y borrar objetos, ver logs y entrar a los Pods. Casi todos los comandos siguen el patrón <code>kubectl &lt;verbo&gt; &lt;tipo&gt; &lt;nombre&gt;</code>, por ejemplo <code>kubectl get pods</code> o <code>kubectl delete deploy chanchito</code>. Lo que está entre <code>&lt; &gt;</code> se reemplaza.</p>
     <div class="toolbar">
       <label class="search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -45,6 +45,23 @@
     </nav>
   </div>
 
+  <section class="terms-box">
+    <h2>Términos de esta página</h2>
+    <p>Los objetos (Pod, Deployment, Service…) están explicados en <a href="01-conceptos.html">Conceptos</a>.</p>
+    <dl class="terms">
+      <dt>Recurso / objeto</dt><dd>Cualquier cosa que existe en el cluster: un Pod, un Deployment, un Service, un namespace. Cada uno tiene un <b>tipo</b> y un <b>nombre</b>.</dd>
+      <dt>Verbo</dt><dd>Lo que querés hacer: <code>get</code> (listar), <code>describe</code> (detalle), <code>apply</code> (crear o actualizar), <code>delete</code> (borrar), <code>logs</code>, <code>exec</code>…</dd>
+      <dt>kubeconfig</dt><dd>El archivo <code>~/.kube/config</code> donde kubectl guarda a qué clusters puede conectarse y con qué credenciales.</dd>
+      <dt>Contexto</dt><dd>Una combinación de cluster + usuario + namespace guardada en el kubeconfig. Cambiar de contexto = cambiar de cluster.</dd>
+      <dt>Namespace</dt><dd>Agrupación de recursos dentro del cluster. Si no indicás uno con <code>-n</code>, kubectl usa <code>default</code>.</dd>
+      <dt>Label</dt><dd>Una etiqueta <code>clave=valor</code> pegada a un objeto (<code>app=chanchito</code>), para filtrar y agrupar.</dd>
+      <dt>Rollout</dt><dd>El proceso de actualizar un Deployment a una versión nueva, reemplazando los Pods de a poco.</dd>
+      <dt>Port-forward</dt><dd>Un túnel temporal desde un puerto de tu PC hasta un Pod o Service del cluster, para probarlo desde el navegador.</dd>
+      <dt>Watch (<code>-w</code>)</dt><dd>Dejar el comando abierto mostrando los cambios en vivo. Se corta con <kbd>Ctrl</kbd>+<kbd>C</kbd>.</dd>
+      <dt>Helm / chart</dt><dd>Helm es un gestor de paquetes para Kubernetes; un chart es un paquete listo para instalar (por ejemplo, una base de datos completa).</dd>
+    </dl>
+  </section>
+
   <!-- ================= LOCAL ================= -->
   <section class="block" id="local" data-search>
     <div class="section-head">
@@ -54,8 +71,17 @@
     <div class="grid cols-3">
       <div class="card t-img">
         <h3>Docker Desktop</h3>
-        <div class="cmd"><div class="what"><b>Settings → Kubernetes → Enable Kubernetes</b> → Apply. Instala <code>kubectl</code> y crea el contexto <code>docker-desktop</code>.</div></div>
-        <div class="cmd"><pre><code>kubectl config use-context docker-desktop</code></pre><div class="what">Apuntar kubectl a ese cluster.</div></div>
+        <div class="cmd"><div class="what">
+          <ol class="steps">
+            <li>Abrí Docker Desktop → ícono de engranaje (<b>Settings</b>) → <b>Kubernetes</b>.</li>
+            <li>Marcá <b>Enable Kubernetes</b> y tocá <b>Apply &amp; restart</b>. Si pregunta por el tipo de cluster, dejá la opción por defecto (kubeadm).</li>
+            <li>Esperá unos minutos a que abajo aparezca <b>Kubernetes running</b>.</li>
+          </ol>
+          Esto instala <code>kubectl</code> y crea el contexto <code>docker-desktop</code>.</div></div>
+        <div class="cmd"><pre><code>kubectl config use-context docker-desktop
+kubectl get nodes</code></pre><div class="what">Apuntar kubectl a ese cluster y comprobar que responde.</div></div>
+        <pre class="out"><code data-lang="plain">NAME             STATUS   ROLES           AGE   VERSION
+docker-desktop   Ready    control-plane   2m    v1.3x.x</code></pre>
         <div class="callout tip"><span class="ico">✓</span><p>Comparte las imágenes con tu Docker: lo que construís con <code>docker build</code> ya está disponible (usá <code>imagePullPolicy: IfNotPresent</code>).</p></div>
       </div>
       <div class="card t-cont">

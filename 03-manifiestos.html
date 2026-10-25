@@ -26,7 +26,7 @@
   <div class="hero">
     <span class="eyebrow">Kubernetes · Cheatsheet 03</span>
     <h1>Manifiestos YAML</h1>
-    <p class="lead">Cada objeto de Kubernetes se describe en YAML y se aplica con <code>kubectl apply -f</code>. Plantillas listas para copiar, usando tu app <code>chanchito</code>.</p>
+    <p class="lead">En Kubernetes no se crean las cosas con clics ni con comandos sueltos: se describen en archivos de texto (manifiestos) en formato YAML y se aplican con <code>kubectl apply -f &lt;archivo&gt;</code>. Esta página explica cómo se escribe cada tipo de objeto, con plantillas para copiar basadas en una app Node llamada <code>chanchito</code> y su base de datos <code>monguito</code>.</p>
     <nav class="toc">
       <a href="#anatomia">Anatomía</a>
       <a href="#labels">Labels y selectors</a>
@@ -39,6 +39,23 @@
       <a href="#organizar">Organizar archivos</a>
     </nav>
   </div>
+
+  <section class="terms-box">
+    <h2>Términos de esta página</h2>
+    <dl class="terms">
+      <dt>Manifiesto</dt><dd>Un archivo <code>.yaml</code> que describe uno o más objetos. Es el “estado deseado” en texto.</dd>
+      <dt>YAML</dt><dd>Formato de texto con sangría de espacios: lo que está más a la derecha pertenece a la línea de arriba. <code>clave: valor</code> es un dato y <code>- </code> marca un elemento de lista.</dd>
+      <dt>apiVersion / kind</dt><dd>Qué tipo de objeto es (<code>kind: Deployment</code>) y qué versión de la API de Kubernetes lo define (<code>apps/v1</code>).</dd>
+      <dt>metadata</dt><dd>Datos de identificación: el nombre, el namespace y las labels.</dd>
+      <dt>spec</dt><dd>La especificación: lo que querés que pase (cuántas réplicas, qué imagen, qué puertos).</dd>
+      <dt>status</dt><dd>Lo que realmente está pasando. Lo escribe Kubernetes, vos nunca.</dd>
+      <dt>Label / selector</dt><dd>Una label es una etiqueta en un objeto (<code>app: chanchito</code>); un selector es un filtro que busca objetos por sus labels. Así se conectan, por ejemplo, un Service y sus Pods.</dd>
+      <dt>template</dt><dd>Dentro de un Deployment, el “molde” con el que se crea cada Pod.</dd>
+      <dt>Probe</dt><dd>Un chequeo automático (por ejemplo, pedir <code>/health</code>) que Kubernetes hace para saber si el contenedor está vivo o listo.</dd>
+      <dt>requests / limits</dt><dd>Cuánta CPU y memoria se reserva para el contenedor y cuánto puede usar como máximo. <code>100m</code> = una décima de núcleo de CPU; <code>128Mi</code> = 128 megabytes.</dd>
+      <dt>Base64</dt><dd>Una forma de escribir datos como texto. No es cifrado: cualquiera puede decodificarlo.</dd>
+    </dl>
+  </section>
 
   <!-- ================= ANATOMIA ================= -->
   <section class="block" id="anatomia">
@@ -434,7 +451,7 @@ kubectl get ingressclass</code></pre><div class="what">Ver Ingress y qué contro
     <div class="grid cols-2">
       <div class="card t-comp">
         <h3>Estructura sugerida</h3>
-        <pre class="big"><code data-lang="plain">pruebas-docker/
+        <pre class="big"><code data-lang="plain">mi-proyecto/
 ├── Dockerfile
 ├── docker-compose.yml
 └── k8s/
