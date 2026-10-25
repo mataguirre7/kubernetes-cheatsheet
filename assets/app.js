@@ -16,6 +16,7 @@
     other: { label: "Docker", href: "", icon: "whale" },
     pages: [
       { id: "inicio",      href: "index.html",               label: "Inicio" },
+      { id: "empezar",     href: "00-empezar.html",          label: "Empezar" },
       { id: "conceptos",   href: "01-conceptos.html",        label: "Conceptos" },
       { id: "kubectl",     href: "02-kubectl.html",          label: "kubectl" },
       { id: "manifiestos", href: "03-manifiestos.html",      label: "Manifiestos YAML" },

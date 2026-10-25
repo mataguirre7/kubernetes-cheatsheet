@@ -128,26 +128,26 @@
         <h3>Levantar todo</h3>
         <div class="cmd"><pre><code># 1. Cluster encendido y apuntado
 kubectl config use-context docker-desktop
-kubectl get nodes</code></pre><div class="what">El nodo tiene que estar <b>Ready</b>.</div></div>
+kubectl get nodes</code></pre><div class="what">Asegura que <code>kubectl</code> le hable al cluster de Docker Desktop y que el nodo esté <b>Ready</b>. Si da error de conexión, activá Kubernetes en Docker Desktop (ver <a href="00-empezar.html">Empezar</a>).</div></div>
         <div class="cmd"><pre><code># 2. Imagen de la app con tag fijo
-docker build -t chanchito:1 .</code></pre><div class="what">Kubernetes no construye: usa imágenes ya hechas.</div></div>
+docker build -t chanchito:1 .</code></pre><div class="what">Kubernetes no construye imágenes: solo corre imágenes que ya existen. Se construye con Docker, en la carpeta del <code>Dockerfile</code>. Usá un tag fijo (<code>:1</code>, <code>:2</code>…) y no <code>:latest</code>, para que el cluster sepa exactamente qué versión correr. En Docker Desktop, el cluster ve tus imágenes locales sin subirlas.</div></div>
         <div class="cmd"><pre><code># 3. Secret (fuera de git)
 kubectl create secret generic mongo-secret \
   --from-literal=MONGO_INITDB_ROOT_USERNAME=mati \
-  --from-literal=MONGO_INITDB_ROOT_PASSWORD=&lt;password&gt;</code></pre><div class="what">Mismos valores que usa <code>app.js</code> en el connection string.</div></div>
+  --from-literal=MONGO_INITDB_ROOT_PASSWORD=&lt;password&gt;</code></pre><div class="what">Guarda usuario y contraseña de Mongo en un Secret del cluster, sin escribirlos en ningún archivo del repo. Los dos Deployments leen sus variables de acá: tienen que ser los mismos valores que espera <code>app.js</code> en la cadena de conexión.</div></div>
         <div class="cmd"><pre><code># 4. Aplicar los manifiestos
-kubectl apply -f k8s/</code></pre><div class="what">≈ <code>docker compose up -d</code>.</div></div>
+kubectl apply -f k8s/</code></pre><div class="what">Crea todo lo que está en la carpeta <code>k8s/</code>: el volumen, la base, la app y sus Services. Equivale a <code>docker compose up -d</code>. Se puede volver a correr después de cada cambio en los archivos.</div></div>
         <div class="cmd"><pre><code># 5. Esperar a que estén Running
-kubectl get pods -w</code></pre><div class="what"><kbd>Ctrl</kbd>+<kbd>C</kbd> cuando todos digan <code>1/1 Running</code>.</div></div>
+kubectl get pods -w</code></pre><div class="what">Muestra los Pods y se queda esperando cambios. Al principio vas a ver <code>Pending</code> o <code>ContainerCreating</code>; cuando todos digan <code>1/1 Running</code>, cortá con <kbd>Ctrl</kbd>+<kbd>C</kbd>. Si alguno queda en <code>CrashLoopBackOff</code> o <code>ImagePullBackOff</code>, ver <a href="06-problemas.html">Problemas comunes</a>.</div></div>
       </div>
       <div class="card t-ok">
         <h3>Probar, ver logs y limpiar</h3>
         <div class="cmd"><pre><code># 6. Probar
 #   http://localhost:30080/crear  -> crea un documento
 #   http://localhost:30080        -> lista
-kubectl port-forward svc/chanchito 3000:80   # alternativa</code></pre><div class="what">Por NodePort o por port-forward.</div></div>
+kubectl port-forward svc/chanchito 3000:80   # alternativa</code></pre><div class="what">El Service de la app es de tipo NodePort en el puerto <code>30080</code>, así que se abre directo en el navegador. Si no responde, el port-forward es una alternativa que no depende del tipo de Service: con él, entrá por <code>http://localhost:3000</code>.</div></div>
         <div class="cmd"><pre><code># 7. Logs de todas las réplicas
-kubectl logs -l app=chanchito -f</code></pre><div class="what">Vas a ver “listando.. chanchitos” repartido entre los Pods.</div></div>
+kubectl logs -l app=chanchito -f</code></pre><div class="what">Sigue en vivo los logs de todos los Pods con la etiqueta <code>app=chanchito</code>. Recargá la página varias veces: los mensajes “listando.. chanchitos” aparecen repartidos entre las réplicas, porque el Service reparte las visitas.</div></div>
         <div class="cmd"><pre><code># 8. Nueva versión
 docker build -t chanchito:2 .
 kubectl set image deployment/chanchito chanchito=chanchito:2
@@ -160,9 +160,9 @@ kubectl delete secret mongo-secret</code></pre><div class="what">≈ <code>docke
         <h3>Si usás minikube o kind</h3>
         <div class="grid cols-2">
           <div class="cmd"><pre><code>minikube image load chanchito:1
-minikube service chanchito --url</code></pre><div class="what">Cargar la imagen (después del build) · obtener la URL del NodePort.</div></div>
+minikube service chanchito --url</code></pre><div class="what">minikube tiene su propio Docker, así que después de cada <code>docker build</code> hay que copiarle la imagen con <code>image load</code>. <code>service --url</code> imprime la dirección del NodePort (en Windows queda abierta mientras la terminal esté corriendo) en vez de <code>localhost:30080</code>.</div></div>
           <div class="cmd"><pre><code>kind load docker-image chanchito:1
-kubectl port-forward svc/chanchito 3000:80</code></pre><div class="what">En kind los NodePort no se publican solos: usá port-forward.</div></div>
+kubectl port-forward svc/chanchito 3000:80</code></pre><div class="what">En kind también hay que cargar la imagen después de cada build. Además, sus NodePort quedan dentro del contenedor del nodo y no se abren en tu PC: usá <code>port-forward</code> y entrá por <code>http://localhost:3000</code>.</div></div>
         </div>
       </div>
     </div>

@@ -79,7 +79,7 @@
           </ol>
           Esto instala <code>kubectl</code> y crea el contexto <code>docker-desktop</code>.</div></div>
         <div class="cmd"><pre><code>kubectl config use-context docker-desktop
-kubectl get nodes</code></pre><div class="what">Apuntar kubectl a ese cluster y comprobar que responde.</div></div>
+kubectl get nodes</code></pre><div class="what">La primera línea le dice a <code>kubectl</code> que use el cluster de Docker Desktop (por si tenías otro configurado). La segunda lista las máquinas del cluster: si aparece <code>docker-desktop</code> con STATUS <b>Ready</b>, está funcionando y listo para recibir Pods.</div></div>
         <pre class="out"><code data-lang="plain">NAME             STATUS   ROLES           AGE   VERSION
 docker-desktop   Ready    control-plane   2m    v1.3x.x</code></pre>
         <div class="callout tip"><span class="ico">✓</span><p>Comparte las imágenes con tu Docker: lo que construís con <code>docker build</code> ya está disponible (usá <code>imagePullPolicy: IfNotPresent</code>).</p></div>
@@ -88,24 +88,24 @@ docker-desktop   Ready    control-plane   2m    v1.3x.x</code></pre>
         <h3>minikube</h3>
         <div class="cmd"><pre><code>minikube start
 minikube stop
-minikube delete</code></pre><div class="what">Crear / detener / borrar el cluster.</div></div>
-        <div class="cmd"><pre><code>minikube image load chanchito:1</code></pre><div class="what">Pasar una imagen local al cluster.</div></div>
-        <div class="cmd"><pre><code>minikube service chanchito</code></pre><div class="what">Abre en el navegador un Service NodePort.</div></div>
+minikube delete</code></pre><div class="what"><b>minikube</b> es otra forma de tener un cluster local, independiente de Docker Desktop. <code>start</code> lo crea la primera vez (tarda unos minutos) y lo enciende las siguientes; <code>stop</code> lo apaga conservando todo; <code>delete</code> lo borra por completo. Al arrancar, configura <code>kubectl</code> para que apunte a él.</div></div>
+        <div class="cmd"><pre><code>minikube image load chanchito:1</code></pre><div class="what">minikube tiene su propio Docker, separado del tuyo: una imagen construida con <code>docker build</code> en tu PC no está ahí. Este comando la copia al cluster para que los Pods puedan usarla sin un registro.</div></div>
+        <div class="cmd"><pre><code>minikube service chanchito</code></pre><div class="what">Busca la dirección por la que se llega a un Service de tipo NodePort y la abre en el navegador. En Windows deja la terminal ocupada mientras mantiene el acceso abierto.</div></div>
         <div class="cmd"><pre><code>minikube dashboard
-minikube tunnel</code></pre><div class="what">Panel web · exponer Services <code>LoadBalancer</code> en tu PC.</div></div>
+minikube tunnel</code></pre><div class="what"><code>dashboard</code> abre un panel web para ver Pods, Deployments y logs con el mouse. <code>tunnel</code> (se deja corriendo en otra terminal) le da una dirección accesible desde tu PC a los Services de tipo <code>LoadBalancer</code>, que en un cluster local, si no, quedan en <i>pending</i>.</div></div>
       </div>
       <div class="card t-net">
         <h3>kind (Kubernetes in Docker)</h3>
         <div class="cmd"><pre><code>kind create cluster --name dev
-kind delete cluster --name dev</code></pre><div class="what">Cluster dentro de contenedores Docker.</div></div>
-        <div class="cmd"><pre><code>kind load docker-image chanchito:1 --name dev</code></pre><div class="what">Cargar imagen local.</div></div>
+kind delete cluster --name dev</code></pre><div class="what"><b>kind</b> (<i>Kubernetes in Docker</i>) crea un cluster cuyos nodos son contenedores de tu Docker. Es rápido de crear y borrar, ideal para pruebas. <code>--name</code> permite tener varios; <code>delete</code> lo elimina.</div></div>
+        <div class="cmd"><pre><code>kind load docker-image chanchito:1 --name dev</code></pre><div class="what">Copia una imagen de tu Docker a los nodos del cluster kind, para que los Pods la encuentren sin subirla a un registro. Hay que repetirlo cada vez que reconstruís la imagen.</div></div>
       </div>
       <div class="card t-comp wide">
         <h3>¿Funciona?</h3>
         <div class="grid cols-3">
-          <div class="cmd"><pre><code>kubectl version</code></pre><div class="what">Versión del cliente y del servidor.</div></div>
-          <div class="cmd"><pre><code>kubectl cluster-info</code></pre><div class="what">Dirección del control plane.</div></div>
-          <div class="cmd"><pre><code>kubectl get nodes</code></pre><div class="what">Los nodos deben estar <b>Ready</b>.</div></div>
+          <div class="cmd"><pre><code>kubectl version</code></pre><div class="what">Muestra la versión de <code>kubectl</code> (<b>Client</b>) y la del cluster (<b>Server</b>). Si solo aparece Client y un error de conexión, kubectl no llega al cluster: revisá que esté encendido y el contexto.</div></div>
+          <div class="cmd"><pre><code>kubectl cluster-info</code></pre><div class="what">Muestra la dirección del <b>control plane</b> (el “cerebro” del cluster, que recibe tus comandos). Si responde, la conexión funciona.</div></div>
+          <div class="cmd"><pre><code>kubectl get nodes</code></pre><div class="what">Lista las máquinas del cluster. Cada una debe estar <b>Ready</b>; <code>NotReady</code> significa que el nodo tiene un problema y no va a recibir Pods nuevos.</div></div>
         </div>
       </div>
     </div>
@@ -120,14 +120,14 @@ kind delete cluster --name dev</code></pre><div class="what">Cluster dentro de c
     <div class="grid">
       <div class="card t-file">
         <h3>Ver y cambiar contexto</h3>
-        <div class="cmd"><pre><code>kubectl config get-contexts</code></pre><div class="what">Lista; el actual tiene <code>*</code>.</div></div>
-        <div class="cmd"><pre><code>kubectl config current-context</code></pre><div class="what">Solo el actual.</div></div>
-        <div class="cmd"><pre><code>kubectl config use-context &lt;contexto&gt;</code></pre><div class="what">Cambiar de cluster.</div></div>
+        <div class="cmd"><pre><code>kubectl config get-contexts</code></pre><div class="what"><code>kubectl</code> puede tener configurados varios clusters (local, de pruebas, de producción). Cada combinación de cluster + usuario + namespace es un <b>contexto</b>. Este comando los lista; el que está en uso tiene un <code>*</code> en la columna CURRENT.</div></div>
+        <div class="cmd"><pre><code>kubectl config current-context</code></pre><div class="what">Muestra solo el nombre del contexto en uso. Conviene mirarlo antes de aplicar o borrar algo.</div></div>
+        <div class="cmd"><pre><code>kubectl config use-context &lt;contexto&gt;</code></pre><div class="what">Cambia el cluster al que le habla <code>kubectl</code>. Todos los comandos siguientes van a ese cluster hasta que vuelvas a cambiarlo.</div></div>
       </div>
       <div class="card t-file">
         <h3>Namespace por defecto</h3>
-        <div class="cmd"><pre><code>kubectl config set-context --current --namespace=&lt;ns&gt;</code></pre><div class="what">Evita escribir <code>-n</code> en cada comando.</div></div>
-        <div class="cmd"><pre><code>kubectl config view --minify</code></pre><div class="what">Config efectiva del contexto actual.</div></div>
+        <div class="cmd"><pre><code>kubectl config set-context --current --namespace=&lt;ns&gt;</code></pre><div class="what">Cambia el namespace por defecto del contexto actual. A partir de ahí, <code>kubectl get pods</code> muestra los de ese namespace sin escribir <code>-n &lt;ns&gt;</code> en cada comando.</div></div>
+        <div class="cmd"><pre><code>kubectl config view --minify</code></pre><div class="what">Muestra la configuración del contexto actual: la dirección del cluster, el usuario y el namespace por defecto (las credenciales aparecen ocultas). Los datos vienen del archivo <code>%USERPROFILE%\.kube\config</code>.</div></div>
         <div class="callout warn"><span class="ico">!</span><p>Antes de borrar algo, <b>revisá el contexto</b>. Es el error clásico: ejecutar en producción creyendo que estás en local.</p></div>
       </div>
     </div>
@@ -142,22 +142,22 @@ kind delete cluster --name dev</code></pre><div class="what">Cluster dentro de c
     <div class="grid">
       <div class="card t-cont">
         <h3>Listar (get)</h3>
-        <div class="cmd"><pre><code>kubectl get pods</code></pre><div class="what">Pods del namespace actual (≈ <code>docker ps</code>).</div></div>
-        <div class="cmd"><pre><code>kubectl get pods -o wide</code></pre><div class="what">Con IP y nodo de cada Pod.</div></div>
-        <div class="cmd"><pre><code>kubectl get pods -A</code></pre><div class="what">De <b>todos</b> los namespaces.</div></div>
-        <div class="cmd"><pre><code>kubectl get pods -w</code></pre><div class="what">Watch: se queda mostrando los cambios.</div></div>
-        <div class="cmd"><pre><code>kubectl get all</code></pre><div class="what">Pods, Services, Deployments, ReplicaSets (no incluye ConfigMaps, Secrets ni PVC).</div></div>
-        <div class="cmd"><pre><code>kubectl get deploy,svc,pvc,cm,secret</code></pre><div class="what">Varios tipos a la vez.</div></div>
+        <div class="cmd"><pre><code>kubectl get pods</code></pre><div class="what">Lista los Pods del namespace actual (es el equivalente a <code>docker ps</code>). Columnas: <b>READY</b> (contenedores listos / total), <b>STATUS</b> (Running, Pending, CrashLoopBackOff…), <b>RESTARTS</b> (cuántas veces se reinició: si sube, algo falla) y <b>AGE</b>.</div></div>
+        <div class="cmd"><pre><code>kubectl get pods -o wide</code></pre><div class="what"><code>-o</code> (<i>output</i>) cambia el formato; <code>wide</code> agrega columnas: la IP interna de cada Pod y en qué nodo corre.</div></div>
+        <div class="cmd"><pre><code>kubectl get pods -A</code></pre><div class="what"><code>-A</code> (<i>all namespaces</i>) muestra los Pods de todos los namespaces, incluidos los del propio Kubernetes en <code>kube-system</code>. Agrega una columna NAMESPACE.</div></div>
+        <div class="cmd"><pre><code>kubectl get pods -w</code></pre><div class="what"><code>-w</code> (<i>watch</i>) se queda mirando y agrega una línea cada vez que un Pod cambia de estado. Ideal justo después de un <code>apply</code>, para ver cómo arrancan. <kbd>Ctrl</kbd>+<kbd>C</kbd> para salir.</div></div>
+        <div class="cmd"><pre><code>kubectl get all</code></pre><div class="what">Muestra de una vez los Pods, Services, Deployments y ReplicaSets del namespace. A pesar del nombre, <b>no</b> incluye ConfigMaps, Secrets, PVC ni Ingress: esos se piden aparte.</div></div>
+        <div class="cmd"><pre><code>kubectl get deploy,svc,pvc,cm,secret</code></pre><div class="what">Lista varios tipos a la vez, separados por coma sin espacios. Se usan los nombres cortos: <code>deploy</code> (Deployment), <code>svc</code> (Service), <code>pvc</code>, <code>cm</code> (ConfigMap), <code>secret</code>.</div></div>
       </div>
       <div class="card t-cont">
         <h3>Detalle (describe)</h3>
-        <div class="cmd"><pre><code>kubectl describe pod &lt;pod&gt;</code></pre><div class="what">Estado, contenedores, volúmenes y <b>Events</b> al final: ahí está el motivo de casi todo error.</div></div>
+        <div class="cmd"><pre><code>kubectl describe pod &lt;pod&gt;</code></pre><div class="what">Muestra todo sobre un Pod en forma legible: en qué nodo está, sus contenedores, imagen, variables, volúmenes y, al final, <b>Events</b>: la historia reciente (se programó, descargó la imagen, arrancó, falló la prueba de salud…). Ahí aparece el motivo de casi todos los errores.</div></div>
         <div class="cmd"><pre><code>kubectl describe deploy chanchito
-kubectl describe svc chanchito</code></pre><div class="what">En un Service mirá <b>Endpoints</b>: si está vacío, el selector no encuentra Pods.</div></div>
-        <div class="cmd"><pre><code>kubectl get events --sort-by=.lastTimestamp</code></pre><div class="what">Eventos del namespace en orden.</div></div>
-        <div class="cmd"><pre><code>kubectl get deploy chanchito -o yaml</code></pre><div class="what">El objeto completo tal como lo guarda el cluster.</div></div>
-        <div class="cmd"><pre><code>kubectl explain deployment.spec.template.spec.containers</code></pre><div class="what">Documentación de cualquier campo del YAML.</div></div>
-        <div class="cmd"><pre><code>kubectl api-resources</code></pre><div class="what">Todos los tipos y sus nombres cortos.</div></div>
+kubectl describe svc chanchito</code></pre><div class="what">Lo mismo para un Deployment (réplicas deseadas y disponibles, imagen, eventos del rollout) y para un Service. En el Service mirá <b>Endpoints</b>: son las IPs de los Pods que recibe. Si está vacío, el <code>selector</code> no coincide con las etiquetas de ningún Pod listo.</div></div>
+        <div class="cmd"><pre><code>kubectl get events --sort-by=.lastTimestamp</code></pre><div class="what">Lista los eventos de todo el namespace (no solo de un Pod), ordenados del más viejo al más nuevo. Útil cuando no sabés qué objeto está fallando. Los eventos se borran solos después de una hora.</div></div>
+        <div class="cmd"><pre><code>kubectl get deploy chanchito -o yaml</code></pre><div class="what">Muestra el objeto completo en YAML, tal como lo guarda el cluster: lo que escribiste más los valores por defecto que agregó Kubernetes y una sección <code>status</code> con su estado actual.</div></div>
+        <div class="cmd"><pre><code>kubectl explain deployment.spec.template.spec.containers</code></pre><div class="what">La documentación de cualquier campo de un manifiesto, sin salir de la terminal: qué tipo de valor lleva y para qué sirve. Agregá <code>--recursive</code> para ver todos los subcampos.</div></div>
+        <div class="cmd"><pre><code>kubectl api-resources</code></pre><div class="what">Lista todos los tipos de objeto que entiende el cluster, con su nombre corto (SHORTNAMES), su <code>apiVersion</code> y si pertenecen a un namespace.</div></div>
       </div>
     </div>
   </section>
@@ -171,28 +171,28 @@ kubectl describe svc chanchito</code></pre><div class="what">En un Service mirá
     <div class="grid">
       <div class="card t-img">
         <h3>Declarativo (apply)</h3>
-        <div class="cmd"><pre><code>kubectl apply -f deployment.yaml</code></pre><div class="what">Crea o actualiza lo que haya en el archivo. Se puede repetir sin miedo.</div></div>
-        <div class="cmd"><pre><code>kubectl apply -f k8s/</code></pre><div class="what">Todos los YAML de una carpeta (≈ <code>docker compose up</code>).</div></div>
-        <div class="cmd"><pre><code>kubectl diff -f k8s/</code></pre><div class="what">Qué cambiaría antes de aplicar.</div></div>
-        <div class="cmd"><pre><code>kubectl delete -f k8s/</code></pre><div class="what">Borra lo definido en esos archivos (≈ <code>compose down</code>).</div></div>
-        <div class="cmd"><pre><code>kubectl apply -k overlays/dev</code></pre><div class="what">Con Kustomize (variantes por entorno).</div></div>
+        <div class="cmd"><pre><code>kubectl apply -f deployment.yaml</code></pre><div class="what">Lee el archivo y hace que el cluster quede como dice: crea lo que no existe y actualiza lo que cambió. Se puede repetir todas las veces que quieras; si no cambió nada, responde <code>unchanged</code>. Es la forma normal de trabajar.</div></div>
+        <div class="cmd"><pre><code>kubectl apply -f k8s/</code></pre><div class="what">Aplica todos los archivos <code>.yaml</code> de una carpeta de una vez: equivale a <code>docker compose up -d</code> para un proyecto completo.</div></div>
+        <div class="cmd"><pre><code>kubectl diff -f k8s/</code></pre><div class="what">Muestra qué cambiaría en el cluster si aplicaras esos archivos, sin cambiar nada (las líneas con <code>-</code> se quitan, con <code>+</code> se agregan). Si no imprime nada, el cluster ya está igual a los archivos.</div></div>
+        <div class="cmd"><pre><code>kubectl delete -f k8s/</code></pre><div class="what">Borra del cluster todo lo que está definido en esos archivos; los archivos no se tocan. Equivale a <code>docker compose down</code>. Si hay un PVC en la carpeta, sus datos también se pierden.</div></div>
+        <div class="cmd"><pre><code>kubectl apply -k overlays/dev</code></pre><div class="what">Aplica con <b>Kustomize</b> (incluido en kubectl): una carpeta base con los manifiestos comunes y carpetas <i>overlay</i> que cambian solo lo que difiere por entorno (réplicas, imagen, namespace). <code>-k</code> apunta a la carpeta que tiene un <code>kustomization.yaml</code>.</div></div>
       </div>
       <div class="card t-img">
         <h3>Imperativo y generadores</h3>
-        <div class="cmd"><pre><code>kubectl create deployment chanchito --image=chanchito:1 --replicas=2</code></pre><div class="what">Crear un Deployment sin YAML.</div></div>
-        <div class="cmd"><pre><code>kubectl expose deployment chanchito --port=80 --target-port=3000</code></pre><div class="what">Crear su Service.</div></div>
+        <div class="cmd"><pre><code>kubectl create deployment chanchito --image=chanchito:1 --replicas=2</code></pre><div class="what">Crea un Deployment directamente con un comando (forma <b>imperativa</b>), sin escribir YAML. Sirve para probar rápido; en un proyecto conviene tenerlo en un archivo para poder versionarlo y repetirlo.</div></div>
+        <div class="cmd"><pre><code>kubectl expose deployment chanchito --port=80 --target-port=3000</code></pre><div class="what">Crea un Service para ese Deployment: recibe en el puerto <code>80</code> y reenvía al <code>3000</code> de los Pods (donde escucha la app). Por defecto es de tipo ClusterIP, accesible solo dentro del cluster; agregá <code>--type=NodePort</code> para abrirlo en tu PC.</div></div>
         <div class="cmd"><pre><code>kubectl create deployment chanchito --image=chanchito:1 \
-  --dry-run=client -o yaml &gt; deployment.yaml</code></pre><div class="what"><b>Truco</b>: genera el YAML base sin crear nada.</div></div>
-        <div class="cmd"><pre><code>kubectl run tmp --rm -it --image=busybox -- sh</code></pre><div class="what">Pod temporal para probar cosas desde adentro del cluster.</div></div>
-        <div class="cmd"><pre><code>kubectl edit deploy chanchito</code></pre><div class="what">Edita en vivo (abre el editor). Mejor cambiar el YAML y aplicar.</div></div>
+  --dry-run=client -o yaml &gt; deployment.yaml</code></pre><div class="what"><b>Truco</b>: <code>--dry-run=client</code> no crea nada en el cluster y <code>-o yaml</code> imprime el manifiesto que hubiera creado; <code>&gt;</code> lo guarda en un archivo. Así obtenés un YAML base correcto para editar en vez de escribirlo desde cero.</div></div>
+        <div class="cmd"><pre><code>kubectl run tmp --rm -it --image=busybox -- sh</code></pre><div class="what">Crea un Pod temporal con <i>busybox</i> (una imagen mínima con herramientas de red) y te abre una terminal adentro. Sirve para probar desde el cluster si un Service responde o un nombre resuelve. <code>--rm</code> lo borra al salir con <code>exit</code>.</div></div>
+        <div class="cmd"><pre><code>kubectl edit deploy chanchito</code></pre><div class="what">Abre el objeto en un editor de texto; al guardar y cerrar, el cambio se aplica al instante. Es cómodo para probar, pero el cambio no queda en tus archivos: el próximo <code>apply</code> lo pisa. Mejor editar el YAML y aplicar.</div></div>
       </div>
       <div class="card t-bad">
         <h3>Borrar</h3>
-        <div class="cmd"><pre><code>kubectl delete pod &lt;pod&gt;</code></pre><div class="what">Si es de un Deployment, <b>se recrea</b> (sirve como “reiniciar”).</div></div>
+        <div class="cmd"><pre><code>kubectl delete pod &lt;pod&gt;</code></pre><div class="what">Borra un Pod. Si pertenece a un Deployment, este crea uno nuevo enseguida para mantener la cantidad de réplicas: en la práctica, funciona como “reiniciar ese Pod”. Para que no vuelva, hay que borrar o escalar el Deployment.</div></div>
         <div class="cmd"><pre><code>kubectl delete deploy chanchito
-kubectl delete svc chanchito</code></pre><div class="what">Borrar por tipo y nombre.</div></div>
-        <div class="cmd"><pre><code>kubectl delete all -l app=chanchito</code></pre><div class="what">Todo lo que tenga ese label.</div></div>
-        <div class="cmd"><pre><code>kubectl delete pod &lt;pod&gt; --grace-period=0 --force</code></pre><div class="what">Forzar un Pod trabado en <i>Terminating</i>.</div></div>
+kubectl delete svc chanchito</code></pre><div class="what">Borra objetos indicando tipo y nombre. Al borrar un Deployment se borran también sus Pods; el Service es un objeto aparte y se borra por separado.</div></div>
+        <div class="cmd"><pre><code>kubectl delete all -l app=chanchito</code></pre><div class="what"><code>-l</code> filtra por etiqueta (<i>label</i>): borra Pods, Services, Deployments y ReplicaSets que tengan <code>app=chanchito</code>. Igual que <code>get all</code>, no incluye ConfigMaps, Secrets ni PVC.</div></div>
+        <div class="cmd"><pre><code>kubectl delete pod &lt;pod&gt; --grace-period=0 --force</code></pre><div class="what">Borra un Pod sin esperar a que termine ordenadamente. Solo para Pods trabados en <i>Terminating</i> durante minutos (por ejemplo, si se cayó el nodo). Usado en una base de datos, puede dejar datos a medio escribir.</div></div>
       </div>
     </div>
   </section>
@@ -206,26 +206,26 @@ kubectl delete svc chanchito</code></pre><div class="what">Borrar por tipo y nom
     <div class="grid">
       <div class="card t-cont">
         <h3>Logs</h3>
-        <div class="cmd"><pre><code>kubectl logs &lt;pod&gt;</code></pre><div class="what">Salida del contenedor.</div></div>
-        <div class="cmd"><pre><code>kubectl logs -f &lt;pod&gt;</code></pre><div class="what">En vivo.</div></div>
-        <div class="cmd"><pre><code>kubectl logs deploy/chanchito</code></pre><div class="what">De un Pod del Deployment sin buscar el nombre.</div></div>
-        <div class="cmd"><pre><code>kubectl logs -l app=chanchito --tail=50</code></pre><div class="what">De todos los Pods con ese label.</div></div>
-        <div class="cmd"><pre><code>kubectl logs &lt;pod&gt; --previous</code></pre><div class="what">Del contenedor <b>anterior</b> que crasheó (clave en <i>CrashLoopBackOff</i>).</div></div>
-        <div class="cmd"><pre><code>kubectl logs &lt;pod&gt; -c &lt;contenedor&gt;</code></pre><div class="what">Si el Pod tiene varios contenedores.</div></div>
+        <div class="cmd"><pre><code>kubectl logs &lt;pod&gt;</code></pre><div class="what">Muestra lo que el contenedor del Pod escribió en la consola (tus <code>console.log</code> y errores). Es lo primero que hay que mirar cuando un Pod no anda.</div></div>
+        <div class="cmd"><pre><code>kubectl logs -f &lt;pod&gt;</code></pre><div class="what"><code>-f</code> (<i>follow</i>) sigue mostrando las líneas nuevas en vivo. <kbd>Ctrl</kbd>+<kbd>C</kbd> deja de mirar; el Pod sigue corriendo.</div></div>
+        <div class="cmd"><pre><code>kubectl logs deploy/chanchito</code></pre><div class="what">Muestra los logs de uno de los Pods del Deployment sin tener que copiar el nombre largo del Pod. Si hay varias réplicas, elige una.</div></div>
+        <div class="cmd"><pre><code>kubectl logs -l app=chanchito --tail=50</code></pre><div class="what">Muestra las últimas 50 líneas de <b>todos</b> los Pods que tengan la etiqueta <code>app=chanchito</code>. Agregá <code>--prefix</code> para ver de qué Pod viene cada línea.</div></div>
+        <div class="cmd"><pre><code>kubectl logs &lt;pod&gt; --previous</code></pre><div class="what">Muestra los logs del contenedor <b>anterior</b>, el que se cayó antes del reinicio actual. Clave cuando un Pod está en <i>CrashLoopBackOff</i>: el contenedor nuevo todavía no escribió nada, pero el anterior tiene el error que lo hizo caer.</div></div>
+        <div class="cmd"><pre><code>kubectl logs &lt;pod&gt; -c &lt;contenedor&gt;</code></pre><div class="what">Si el Pod tiene más de un contenedor, <code>-c</code> elige de cuál ver los logs (sin él, kubectl te pide que elijas). Los nombres están en <code>kubectl describe pod</code>.</div></div>
       </div>
       <div class="card t-cont">
         <h3>Entrar y copiar</h3>
-        <div class="cmd"><pre><code>kubectl exec -it &lt;pod&gt; -- sh</code></pre><div class="what">Shell dentro del Pod. El <code>--</code> separa kubectl del comando.</div></div>
-        <div class="cmd"><pre><code>kubectl exec -it deploy/monguito -- mongosh -u mati -p &lt;password&gt;</code></pre><div class="what">Consola de Mongo.</div></div>
-        <div class="cmd"><pre><code>kubectl cp &lt;pod&gt;:/home/app/log.txt ./log.txt</code></pre><div class="what">Copiar archivos Pod ⇄ PC.</div></div>
+        <div class="cmd"><pre><code>kubectl exec -it &lt;pod&gt; -- sh</code></pre><div class="what">Abre una terminal dentro del contenedor de un Pod que está corriendo. <code>-it</code> conecta tu teclado y el <code>--</code> separa las opciones de kubectl del comando que se ejecuta adentro. Salís con <code>exit</code>.</div></div>
+        <div class="cmd"><pre><code>kubectl exec -it deploy/monguito -- mongosh -u mati -p &lt;password&gt;</code></pre><div class="what">Abre la consola de MongoDB dentro del Pod de la base, eligiéndolo por su Deployment. Ahí podés escribir <code>show dbs</code> o consultar colecciones. Salís con <code>exit</code>.</div></div>
+        <div class="cmd"><pre><code>kubectl cp &lt;pod&gt;:/home/app/log.txt ./log.txt</code></pre><div class="what">Copia archivos entre un Pod y tu PC, en cualquier dirección: primero el origen y después el destino; la parte del Pod se escribe <code>pod:/ruta</code>. Necesita que la imagen tenga el programa <code>tar</code>.</div></div>
         <div class="cmd"><pre><code>kubectl top pods
-kubectl top nodes</code></pre><div class="what">CPU / RAM (requiere <i>metrics-server</i>).</div></div>
+kubectl top nodes</code></pre><div class="what">Muestra cuánta CPU (en <i>millicores</i>: <code>100m</code> = una décima de núcleo) y memoria usa cada Pod ahora. Requiere <b>metrics-server</b>, que Docker Desktop no trae instalado; sin él, da el error <i>Metrics API not available</i>.</div></div>
       </div>
       <div class="card t-net">
         <h3>Acceder desde tu PC</h3>
-        <div class="cmd"><pre><code>kubectl port-forward svc/chanchito 3000:80</code></pre><div class="what"><code>localhost:3000</code> → puerto 80 del Service. Formato <b>LOCAL:REMOTO</b>, como <code>-p</code> de Docker.</div></div>
-        <div class="cmd"><pre><code>kubectl port-forward svc/monguito 27017:27017</code></pre><div class="what">Conectar Compass a la base del cluster.</div></div>
-        <div class="cmd"><pre><code>kubectl port-forward pod/&lt;pod&gt; 3000:3000</code></pre><div class="what">Directo a un Pod.</div></div>
+        <div class="cmd"><pre><code>kubectl port-forward svc/chanchito 3000:80</code></pre><div class="what">Abre un túnel temporal: lo que entra por <code>localhost:3000</code> en tu PC llega al puerto <code>80</code> del Service. El formato es <b>tu PC:destino</b>, como el <code>-p</code> de Docker. Queda corriendo mientras lo uses; <kbd>Ctrl</kbd>+<kbd>C</kbd> lo cierra.</div></div>
+        <div class="cmd"><pre><code>kubectl port-forward svc/monguito 27017:27017</code></pre><div class="what">Lo mismo para la base: con el túnel abierto, MongoDB Compass o tu app local se conectan a <code>localhost:27017</code> como si Mongo corriera en tu PC.</div></div>
+        <div class="cmd"><pre><code>kubectl port-forward pod/&lt;pod&gt; 3000:3000</code></pre><div class="what">Túnel directo a un Pod concreto, sin pasar por el Service. Útil para probar una réplica específica o cuando el Service no funciona y querés descartar que el problema sea la app.</div></div>
         <div class="callout info"><span class="ico">i</span><p>Queda corriendo en la terminal: <kbd>Ctrl</kbd>+<kbd>C</kbd> lo corta.</p></div>
       </div>
     </div>
@@ -287,18 +287,18 @@ kubectl top nodes</code></pre><div class="what">CPU / RAM (requiere <i>metrics-s
     <div class="grid" style="margin-top:16px">
       <div class="card t-ok">
         <h3>Escalar</h3>
-        <div class="cmd"><pre><code>kubectl scale deploy chanchito --replicas=5</code></pre><div class="what">Cambia la cantidad de Pods.</div></div>
-        <div class="cmd"><pre><code>kubectl autoscale deploy chanchito --min=2 --max=6 --cpu-percent=70</code></pre><div class="what">Crea un HorizontalPodAutoscaler (requiere metrics-server).</div></div>
-        <div class="cmd"><pre><code>kubectl get hpa</code></pre><div class="what">Ver el autoscaler.</div></div>
+        <div class="cmd"><pre><code>kubectl scale deploy chanchito --replicas=5</code></pre><div class="what">Cambia la cantidad de Pods que mantiene el Deployment: crea los que faltan o borra los que sobran. El cambio no queda en tu YAML; para que sea permanente, cambiá <code>replicas:</code> en el archivo.</div></div>
+        <div class="cmd"><pre><code>kubectl autoscale deploy chanchito --min=2 --max=6 --cpu-percent=70</code></pre><div class="what">Crea un <b>HorizontalPodAutoscaler</b> (HPA): agrega Pods cuando el uso de CPU promedio supera el 70 % de lo pedido en <code>resources.requests</code>, y los quita cuando baja, siempre entre 2 y 6. Requiere metrics-server y que el contenedor declare <code>requests</code> de CPU.</div></div>
+        <div class="cmd"><pre><code>kubectl get hpa</code></pre><div class="what">Muestra los autoscalers: el uso actual frente al objetivo (por ejemplo <code>45%/70%</code>) y cuántas réplicas hay. Si dice <code>&lt;unknown&gt;</code>, falta metrics-server o los <code>requests</code>.</div></div>
       </div>
       <div class="card t-ok">
         <h3>Actualizar y rollback</h3>
-        <div class="cmd"><pre><code>kubectl set image deployment/chanchito chanchito=chanchito:2</code></pre><div class="what">Nueva imagen (<code>contenedor=imagen</code>).</div></div>
-        <div class="cmd"><pre><code>kubectl rollout status deploy/chanchito</code></pre><div class="what">Seguir el progreso.</div></div>
-        <div class="cmd"><pre><code>kubectl rollout history deploy/chanchito</code></pre><div class="what">Revisiones anteriores.</div></div>
+        <div class="cmd"><pre><code>kubectl set image deployment/chanchito chanchito=chanchito:2</code></pre><div class="what">Cambia la imagen de un contenedor del Deployment. El formato es <code>nombre-del-contenedor=imagen</code> (el nombre es el de <code>containers[].name</code> en el YAML). Dispara un <b>rolling update</b>: reemplaza los Pods de a poco, sin cortar el servicio.</div></div>
+        <div class="cmd"><pre><code>kubectl rollout status deploy/chanchito</code></pre><div class="what">Sigue el progreso de una actualización hasta que todos los Pods nuevos estén listos (<i>successfully rolled out</i>). Si se queda esperando, los Pods nuevos no arrancan: mirá <code>get pods</code> y sus logs.</div></div>
+        <div class="cmd"><pre><code>kubectl rollout history deploy/chanchito</code></pre><div class="what">Lista las revisiones (versiones) que guardó el Deployment, numeradas. Cada cambio en el <code>template</code> del Pod (imagen, variables…) crea una revisión nueva.</div></div>
         <div class="cmd"><pre><code>kubectl rollout undo deploy/chanchito
-kubectl rollout undo deploy/chanchito --to-revision=2</code></pre><div class="what">Volver a la versión anterior (o a una específica).</div></div>
-        <div class="cmd"><pre><code>kubectl rollout restart deploy/chanchito</code></pre><div class="what">Recrear todos los Pods (ej. tras cambiar un ConfigMap).</div></div>
+kubectl rollout undo deploy/chanchito --to-revision=2</code></pre><div class="what">Vuelve a la revisión anterior, con otro rolling update. Con <code>--to-revision=N</code> vuelve a una revisión concreta de <code>rollout history</code>. Recordá corregir también tu YAML, o el próximo <code>apply</code> vuelve a poner la versión mala.</div></div>
+        <div class="cmd"><pre><code>kubectl rollout restart deploy/chanchito</code></pre><div class="what">Reemplaza todos los Pods por Pods nuevos, de a poco y sin cortar el servicio, aunque no haya cambiado nada. Se usa después de cambiar un ConfigMap o un Secret, porque los Pods que ya corren no ven las variables nuevas.</div></div>
       </div>
     </div>
   </section>
@@ -312,19 +312,19 @@ kubectl rollout undo deploy/chanchito --to-revision=2</code></pre><div class="wh
     <div class="grid">
       <div class="card t-comp">
         <h3>Namespaces</h3>
-        <div class="cmd"><pre><code>kubectl get ns</code></pre><div class="what">Listar. Vienen <code>default</code>, <code>kube-system</code>, <code>kube-public</code>…</div></div>
-        <div class="cmd"><pre><code>kubectl create ns chanchito-dev</code></pre><div class="what">Crear.</div></div>
+        <div class="cmd"><pre><code>kubectl get ns</code></pre><div class="what">Lista los <b>namespaces</b>: espacios separados dentro de un mismo cluster, para que proyectos o entornos no se mezclen. Siempre existen <code>default</code> (donde va lo tuyo si no indicás otro), <code>kube-system</code> (los componentes de Kubernetes) y <code>kube-public</code>.</div></div>
+        <div class="cmd"><pre><code>kubectl create ns chanchito-dev</code></pre><div class="what">Crea un namespace nuevo. Los nombres de objetos solo tienen que ser únicos dentro de cada namespace: puede haber un Deployment <code>chanchito</code> en <code>chanchito-dev</code> y otro en <code>chanchito-qa</code>.</div></div>
         <div class="cmd"><pre><code>kubectl get pods -n chanchito-dev
-kubectl apply -f k8s/ -n chanchito-dev</code></pre><div class="what"><code>-n</code> en cualquier comando.</div></div>
-        <div class="cmd"><pre><code>kubectl delete ns chanchito-dev</code></pre><div class="what">⚠ Borra <b>todo</b> lo que hay adentro.</div></div>
+kubectl apply -f k8s/ -n chanchito-dev</code></pre><div class="what"><code>-n &lt;namespace&gt;</code> funciona en cualquier comando para trabajar en ese namespace: listar, aplicar, borrar, ver logs. Sin <code>-n</code>, se usa el del contexto (normalmente <code>default</code>).</div></div>
+        <div class="cmd"><pre><code>kubectl delete ns chanchito-dev</code></pre><div class="what">⚠ Borra el namespace y <b>todo</b> lo que hay adentro: Deployments, Services, Secrets, PVC con sus datos. No pide confirmación.</div></div>
       </div>
       <div class="card t-comp">
         <h3>Labels</h3>
-        <div class="cmd"><pre><code>kubectl get pods --show-labels</code></pre><div class="what">Ver labels.</div></div>
+        <div class="cmd"><pre><code>kubectl get pods --show-labels</code></pre><div class="what">Agrega una columna con las <b>etiquetas</b> (<i>labels</i>) de cada Pod: pares <code>clave=valor</code> que se ponen en <code>metadata.labels</code> y que usan los Services y Deployments para encontrar sus Pods.</div></div>
         <div class="cmd"><pre><code>kubectl get pods -l app=chanchito
-kubectl get pods -l 'env in (dev,qa)'</code></pre><div class="what">Filtrar por label (selector).</div></div>
+kubectl get pods -l 'env in (dev,qa)'</code></pre><div class="what"><code>-l</code> filtra por etiqueta: solo los Pods con <code>app=chanchito</code>. La segunda forma elige varios valores. Es el mismo mecanismo (el <b>selector</b>) que usa un Service para saber a qué Pods mandar tráfico.</div></div>
         <div class="cmd"><pre><code>kubectl label pod &lt;pod&gt; env=dev
-kubectl label pod &lt;pod&gt; env-</code></pre><div class="what">Agregar / quitar (con <code>-</code> al final).</div></div>
+kubectl label pod &lt;pod&gt; env-</code></pre><div class="what">Agrega o cambia una etiqueta en un objeto existente; con <code>-</code> al final del nombre (<code>env-</code>) la quita. Si le sacás a un Pod la etiqueta que usa su Deployment, el Deployment deja de considerarlo suyo y crea otro.</div></div>
       </div>
     </div>
   </section>
@@ -366,20 +366,20 @@ kubectl label pod &lt;pod&gt; env-</code></pre><div class="what">Agregar / quita
         <h3>Alias y autocompletado</h3>
         <div class="cmd"><pre><code># PowerShell ($PROFILE)
 Set-Alias k kubectl
-kubectl completion powershell | Out-String | Invoke-Expression</code></pre><div class="what">Después: <code>k get po</code>, con Tab para completar.</div></div>
+kubectl completion powershell | Out-String | Invoke-Expression</code></pre><div class="what">Crea el alias <code>k</code> para no escribir <code>kubectl</code> y activa el autocompletado con <kbd>Tab</kbd> (nombres de comandos, tipos y hasta nombres de Pods). Pegalo en tu perfil de PowerShell (<code>notepad $PROFILE</code>) para que se cargue en cada terminal nueva. Después: <code>k get po</code>.</div></div>
         <div class="cmd"><pre><code># Bash / Git Bash (~/.bashrc)
 alias k=kubectl
-source &lt;(kubectl completion bash)</code></pre><div class="what">Lo mismo en Bash.</div></div>
+source &lt;(kubectl completion bash)</code></pre><div class="what">Lo mismo para Bash o Git Bash: agregá esas líneas al final de <code>~/.bashrc</code> y abrí una terminal nueva.</div></div>
         <div class="cmd"><div class="what">Nombres cortos: <code>po</code> pods · <code>deploy</code> · <code>svc</code> · <code>ns</code> · <code>cm</code> · <code>pvc</code> · <code>ing</code> · <code>sts</code> · <code>no</code> nodes.</div></div>
       </div>
       <div class="card t-img">
         <h3>Helm (gestor de paquetes)</h3>
         <div class="cmd"><pre><code>helm repo add traefik https://traefik.github.io/charts
-helm repo update</code></pre><div class="what">Agregar un repositorio de charts.</div></div>
-        <div class="cmd"><pre><code>helm install traefik traefik/traefik -n traefik --create-namespace</code></pre><div class="what">Instalar una app empaquetada (un “chart”). Traefik sirve como Ingress controller.</div></div>
+helm repo update</code></pre><div class="what"><b>Helm</b> es un gestor de paquetes para Kubernetes: un <b>chart</b> es un paquete con todos los manifiestos de una aplicación, listos para instalar. <code>repo add</code> registra un repositorio de charts con un nombre corto; <code>repo update</code> descarga la lista actualizada de lo que ofrece.</div></div>
+        <div class="cmd"><pre><code>helm install traefik traefik/traefik -n traefik --create-namespace</code></pre><div class="what">Instala el chart <code>traefik/traefik</code> (repositorio/chart) con el nombre <code>traefik</code>, en el namespace <code>traefik</code>, creándolo si no existe. A cada instalación Helm la llama <b>release</b>. Traefik es un <b>Ingress controller</b>: el programa que hace funcionar los Ingress.</div></div>
         <div class="cmd"><pre><code>helm list -A
 helm upgrade traefik traefik/traefik -n traefik -f values.yaml
-helm uninstall traefik -n traefik</code></pre><div class="what">Listar · actualizar con tus valores · desinstalar.</div></div>
+helm uninstall traefik -n traefik</code></pre><div class="what"><code>list</code> muestra los releases instalados en todos los namespaces. <code>upgrade</code> actualiza uno, aplicando tus valores de configuración de <code>values.yaml</code>. <code>uninstall</code> lo borra con todo lo que había creado.</div></div>
       </div>
     </div>
   </section>

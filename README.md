@@ -1,11 +1,12 @@
 # ⎈ Kubernetes Cheatsheets
 
-Cheatsheets visuales de Kubernetes en español: diagramas, `kubectl` con buscador, manifiestos listos para copiar, botón copiar y tema claro/oscuro.
+Cheatsheets de Kubernetes en español, pensadas para quien empieza: cada página explica sus términos y hay una guía para pasar de cero a una app corriendo en un cluster local. Incluyen diagramas, `kubectl` con buscador, manifiestos listos para copiar, botón copiar y tema claro/oscuro.
 Sitio 100 % estático (HTML + CSS + JS, sin build ni dependencias).
 
 | Hoja | Contenido |
 |---|---|
 | `index.html` | Portada, buscador “Quiero…” y descargas en PNG |
+| `00-empezar.html` | Activar el cluster de Docker Desktop, primer Deployment, port-forward, escalar, YAML y limpiar, paso a paso |
 | `01-conceptos.html` | Arquitectura del cluster, estado deseado, Deployment → Pods, glosario, equivalencias con Docker |
 | `02-kubectl.html` | Cluster local, contextos, `get`/`describe`, `apply`, logs, `exec`, `port-forward`, rollouts, Helm |
 | `03-manifiestos.html` | Anatomía, labels y selectors, Deployment, Service, ConfigMap, Secret, PVC, Ingress, probes |
@@ -17,7 +18,7 @@ Sitio 100 % estático (HTML + CSS + JS, sin build ni dependencias).
 
 ```
 kubernetes-cheatsheets/
-├── index.html, 01-…06-*.html   # páginas
+├── index.html, 00-…06-*.html   # páginas
 ├── 404.html                    # página de error (Netlify la usa sola)
 ├── assets/
 │   ├── style.css               # estilos y temas

@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Empezar con Kubernetes desde cero en Windows: activar el cluster de Docker Desktop, primer Deployment, abrirlo en el navegador, escalar, ver cómo se recupera solo y pasar a un manifiesto YAML.">
+<meta name="theme-color" content="#326ce5">
+<title>Kubernetes · Empezar desde cero</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%8E%88%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/app.js"></script>
+</head>
+<body data-set="k8s" data-page="empezar">
+<header class="topbar"></header>
+
+<main class="wrap">
+
+  <div class="hero">
+    <span class="eyebrow">Kubernetes · Cheatsheet 00</span>
+    <h1>Empezar con Kubernetes desde cero</h1>
+    <p class="lead">Una guía para hacer en orden, en Windows, sin servidores ni cuentas en la nube. Vas a activar el Kubernetes que trae Docker Desktop, correr tu primera app, abrirla en el navegador, multiplicarla, ver cómo se recupera sola cuando algo falla y, al final, describirla en un archivo como se hace en proyectos reales. Cada paso explica qué hace y muestra lo que deberías ver.</p>
+    <nav class="toc">
+      <a href="#requisitos">Requisitos</a>
+      <a href="#activar">1 · Activar el cluster</a>
+      <a href="#verificar">2 · Verificar</a>
+      <a href="#deployment">3 · Primera app</a>
+      <a href="#abrir">4 · Abrirla</a>
+      <a href="#escalar">5 · Escalar y autocuración</a>
+      <a href="#manifiesto">6 · Con un archivo YAML</a>
+      <a href="#logs">7 · Logs y entrar</a>
+      <a href="#limpiar">8 · Limpiar</a>
+    </nav>
+  </div>
+
+  <section class="terms-box">
+    <h2>Términos de esta página</h2>
+    <p>Con más detalle en <a href="01-conceptos.html">Conceptos</a>.</p>
+    <dl class="terms">
+      <dt>Cluster</dt><dd>El grupo de máquinas que maneja Kubernetes. En esta guía es una sola: tu PC, a través de Docker Desktop.</dd>
+      <dt>Nodo</dt><dd>Cada máquina del cluster. Acá hay uno, llamado <code>docker-desktop</code>.</dd>
+      <dt>kubectl</dt><dd>El comando para darle órdenes al cluster. Viene instalado con Docker Desktop.</dd>
+      <dt>Pod</dt><dd>La unidad mínima que corre Kubernetes: envuelve uno o más contenedores.</dd>
+      <dt>Deployment</dt><dd>Un objeto que dice “quiero N copias de este Pod, con esta imagen”. Kubernetes las crea y las mantiene vivas.</dd>
+      <dt>Réplica</dt><dd>Cada copia de un Pod.</dd>
+      <dt>Service</dt><dd>Un nombre y una dirección fijos para llegar a los Pods, aunque cambien.</dd>
+      <dt>Manifiesto</dt><dd>Un archivo YAML que describe lo que querés que exista en el cluster.</dd>
+      <dt>Imperativo / declarativo</dt><dd><b>Imperativo</b>: dar órdenes sueltas (“creá esto”, “escalá aquello”). <b>Declarativo</b>: describir en un archivo cómo tiene que quedar todo y aplicarlo. En proyectos reales se usa el declarativo.</dd>
+    </dl>
+  </section>
+
+  <!-- ================= REQUISITOS ================= -->
+  <section class="block" id="requisitos">
+    <div class="section-head">
+      <div class="num">0</div>
+      <div class="titles"><h2>Requisitos</h2></div>
+    </div>
+    <div class="explain">
+      <p>Necesitás <b>Docker Desktop</b> instalado y funcionando (en la colección de Docker, la hoja “Empezar desde cero” explica cómo). Si <code>docker version</code> muestra las secciones Client y Server, estás listo.</p>
+      <p>Conviene conocer lo básico de Docker (imagen, contenedor, puerto), porque Kubernetes corre contenedores Docker: lo que cambia es quién los administra.</p>
+    </div>
+  </section>
+
+  <!-- ================= ACTIVAR ================= -->
+  <section class="block" id="activar">
+    <div class="section-head">
+      <div class="num">1</div>
+      <div class="titles"><h2>Activar el cluster de Docker Desktop</h2><p>Una sola vez.</p></div>
+    </div>
+    <div class="card">
+      <ol class="steps">
+        <li>Abrí Docker Desktop y entrá a <b>Settings</b> (ícono de engranaje arriba a la derecha).</li>
+        <li>En el menú de la izquierda, elegí <b>Kubernetes</b>.</li>
+        <li>Marcá <b>Enable Kubernetes</b>. Si te deja elegir el tipo de cluster, dejá el predeterminado (<b>kubeadm</b>): es el que comparte las imágenes con tu Docker.</li>
+        <li>Tocá <b>Apply &amp; restart</b> y aceptá si pide instalar componentes.</li>
+        <li>Esperá unos minutos: la primera vez descarga varias imágenes. Abajo a la izquierda tiene que aparecer <b>Kubernetes running</b> (o un ícono de Kubernetes en verde).</li>
+      </ol>
+      <div class="callout info"><span class="ico">i</span><p>Este cluster corre adentro de Docker Desktop: si cerrás Docker Desktop, el cluster también se detiene. Para apagarlo sin cerrar Docker, desmarcá <b>Enable Kubernetes</b>.</p></div>
+    </div>
+  </section>
+
+  <!-- ================= VERIFICAR ================= -->
+  <section class="block" id="verificar">
+    <div class="section-head">
+      <div class="num">2</div>
+      <div class="titles"><h2>Verificar que kubectl llega al cluster</h2><p>En una terminal nueva (PowerShell o la de VS Code).</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card">
+        <div class="cmd"><pre><code>kubectl config current-context</code></pre><div class="what"><code>kubectl</code> puede conocer varios clusters; el <b>contexto</b> es el que está usando ahora. Tiene que decir <code>docker-desktop</code>. Si dice otro: <code>kubectl config use-context docker-desktop</code>.</div></div>
+        <pre class="out"><code data-lang="plain">docker-desktop</code></pre>
+        <div class="cmd"><pre><code>kubectl get nodes</code></pre><div class="what">Lista las máquinas del cluster. <b>Ready</b> significa que el nodo está listo para correr Pods.</div></div>
+        <pre class="out"><code data-lang="plain">NAME             STATUS   ROLES           AGE   VERSION
+docker-desktop   Ready    control-plane   5m    v1.3x.x</code></pre>
+      </div>
+      <div class="card">
+        <div class="cmd"><pre><code>kubectl get pods -A</code></pre><div class="what">Lista <b>todos</b> los Pods de todos los namespaces (<code>-A</code>). Vas a ver los del propio Kubernetes, en el namespace <code>kube-system</code>: es normal que existan. Los tuyos van a ir en <code>default</code>.</div></div>
+        <div class="callout bad"><span class="ico">✕</span><p>Si aparece <i>“Unable to connect to the server”</i> o <i>“connection refused”</i>, el cluster todavía está arrancando o no se activó. Revisá que Docker Desktop diga <b>Kubernetes running</b>.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DEPLOYMENT ================= -->
+  <section class="block" id="deployment">
+    <div class="section-head">
+      <div class="num">3</div>
+      <div class="titles"><h2>Tu primera app en el cluster</h2><p>Un servidor web nginx, creado con un comando (forma imperativa).</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card">
+        <div class="cmd"><pre><code>kubectl create deployment web --image=nginx:1.27</code></pre><div class="what">Crea un <b>Deployment</b> llamado <code>web</code> que usa la imagen <code>nginx:1.27</code>. Kubernetes descarga la imagen y crea un Pod con ella. Es parecido a <code>docker run</code>, pero quien vigila el contenedor ahora es Kubernetes.</div></div>
+        <pre class="out"><code data-lang="plain">deployment.apps/web created</code></pre>
+        <div class="cmd"><pre><code>kubectl get deployments</code></pre><div class="what">Lista los Deployments. <b>READY 1/1</b> = quería 1 Pod y tiene 1 listo. Si dice <code>0/1</code>, esperá unos segundos (está descargando la imagen).</div></div>
+        <pre class="out"><code data-lang="plain">NAME   READY   UP-TO-DATE   AVAILABLE   AGE
+web    1/1     1            1           20s</code></pre>
+      </div>
+      <div class="card">
+        <div class="cmd"><pre><code>kubectl get pods</code></pre><div class="what">Lista los Pods. El nombre lo inventa Kubernetes: el del Deployment más dos sufijos al azar. <b>STATUS Running</b> = el contenedor está corriendo.</div></div>
+        <pre class="out"><code data-lang="plain">NAME                   READY   STATUS    RESTARTS   AGE
+web-7d4c8b9f6d-x2k4p   1/1     Running   0          25s</code></pre>
+        <div class="cmd"><pre><code>kubectl describe pod &lt;nombre-del-pod&gt;</code></pre><div class="what">Todo el detalle de un Pod. Lo más útil está al final, en <b>Events</b>: la historia de lo que pasó (se programó en un nodo, descargó la imagen, arrancó el contenedor). Copiá el nombre exacto de <code>kubectl get pods</code>.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ABRIR ================= -->
+  <section class="block" id="abrir">
+    <div class="section-head">
+      <div class="num">4</div>
+      <div class="titles"><h2>Abrirla en el navegador</h2></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card">
+        <div class="explain"><p>El Pod tiene una dirección dentro del cluster, pero desde tu PC todavía no se puede entrar. La forma más rápida de probar es un <b>port-forward</b>: un túnel temporal entre un puerto de tu PC y el Pod.</p></div>
+        <div class="cmd"><pre><code>kubectl port-forward deployment/web 8080:80</code></pre><div class="what">Conecta el puerto 8080 de tu PC con el puerto 80 del Pod (donde escucha nginx). Igual que en Docker, el formato es <b>tu PC : destino</b>. El comando queda corriendo mientras uses el túnel.</div></div>
+        <pre class="out"><code data-lang="plain">Forwarding from 127.0.0.1:8080 -&gt; 80
+Forwarding from [::1]:8080 -&gt; 80</code></pre>
+      </div>
+      <div class="card">
+        <ol class="steps">
+          <li>Abrí <code>http://localhost:8080</code>: aparece <b>“Welcome to nginx!”</b>.</li>
+          <li>Volvé a la terminal y cortá el túnel con <kbd>Ctrl</kbd>+<kbd>C</kbd>. La app sigue corriendo en el cluster; solo se cierra el acceso desde tu PC.</li>
+        </ol>
+        <div class="callout info"><span class="ico">i</span><p>El port-forward es para probar. Para dejar una app accesible de forma permanente se usa un <b>Service</b>, que es lo que vas a hacer en el paso 6.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ESCALAR ================= -->
+  <section class="block" id="escalar">
+    <div class="section-head">
+      <div class="num">5</div>
+      <div class="titles"><h2>Escalar y ver la autocuración</h2><p>Las dos cosas que Docker solo no hace.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Tres copias en vez de una</h3>
+        <div class="cmd"><pre><code>kubectl scale deployment web --replicas=3</code></pre><div class="what">Cambia la cantidad deseada de réplicas a 3. Kubernetes crea las dos que faltan.</div></div>
+        <div class="cmd"><pre><code>kubectl get pods</code></pre></div>
+        <pre class="out"><code data-lang="plain">NAME                   READY   STATUS    RESTARTS   AGE
+web-7d4c8b9f6d-x2k4p   1/1     Running   0          3m
+web-7d4c8b9f6d-7hq9z   1/1     Running   0          5s
+web-7d4c8b9f6d-mv2rt   1/1     Running   0          5s</code></pre>
+      </div>
+      <div class="card">
+        <h3>Borrar un Pod “por accidente”</h3>
+        <div class="cmd"><pre><code>kubectl delete pod web-7d4c8b9f6d-x2k4p</code></pre><div class="what">Borra uno de los Pods (usá un nombre de tu lista).</div></div>
+        <div class="cmd"><pre><code>kubectl get pods</code></pre><div class="what">Vuelve a haber 3: uno es nuevo (otro nombre y <b>AGE</b> de pocos segundos). El Deployment dice “quiero 3”; al ver que había 2, creó otro. Eso es la <b>autocuración</b>: si un Pod se cae o una máquina falla, Kubernetes lo reemplaza solo.</div></div>
+        <div class="callout tip"><span class="ico">✓</span><p>Por eso, para apagar una app no se borran sus Pods: se borra (o se escala a 0) el Deployment.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MANIFIESTO ================= -->
+  <section class="block" id="manifiesto">
+    <div class="section-head">
+      <div class="num">6</div>
+      <div class="titles"><h2>Lo mismo, con un archivo (forma declarativa)</h2><p>Así se trabaja en proyectos reales: el archivo se guarda en Git y se aplica cuantas veces haga falta.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>a) Borrar lo creado a mano</h3>
+        <div class="cmd"><pre><code>kubectl delete deployment web</code></pre><div class="what">Borra el Deployment y, con él, sus Pods.</div></div>
+        <h3 style="margin-top:12px">b) Crear el archivo <code>web.yaml</code></h3>
+        <div class="explain"><p>En cualquier carpeta, con tu editor. Son dos objetos en un mismo archivo, separados por <code>---</code>:</p></div>
+        <pre class="big"><code data-lang="yaml"># 1) Deployment: qué correr y cuántas copias
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web     # sus Pods: los de esta etiqueta
+  template:        # el molde de cada Pod
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.27
+          ports:
+            - containerPort: 80
+---
+# 2) Service: cómo llegar a esos Pods
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+spec:
+  type: NodePort
+  selector:
+    app: web       # a qué Pods manda tráfico
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30080  # puerto en tu PC</code></pre>
+      </div>
+      <div class="card">
+        <h3>c) Aplicarlo</h3>
+        <div class="cmd"><pre><code>kubectl apply -f web.yaml</code></pre><div class="what">Lee el archivo y crea (o actualiza) lo que describe. <code>-f</code> = <i>file</i>, el archivo a leer.</div></div>
+        <pre class="out"><code data-lang="plain">deployment.apps/web created
+service/web created</code></pre>
+        <div class="explain"><p>Abrí <code>http://localhost:30080</code>: el Service de tipo NodePort deja la app accesible sin túnel y reparte las visitas entre las 2 réplicas.</p></div>
+        <h3 style="margin-top:12px">d) Cambiar y volver a aplicar</h3>
+        <div class="explain"><p>Cambiá <code>replicas: 2</code> por <code>replicas: 4</code> en el archivo, guardá y aplicá de nuevo:</p></div>
+        <div class="cmd"><pre><code>kubectl apply -f web.yaml</code></pre><div class="what">Kubernetes compara el archivo con lo que existe y cambia solo lo necesario.</div></div>
+        <pre class="out"><code data-lang="plain">deployment.apps/web configured
+service/web unchanged</code></pre>
+        <div class="callout info"><span class="ico">i</span><p>Cada parte de este archivo está explicada en <a href="03-manifiestos.html">Manifiestos YAML</a>; los tipos de Service, en <a href="04-red-config-datos.html">Red, config y datos</a>.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= LOGS ================= -->
+  <section class="block" id="logs">
+    <div class="section-head">
+      <div class="num">7</div>
+      <div class="titles"><h2>Ver logs y entrar a un Pod</h2></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card">
+        <div class="cmd"><pre><code>kubectl logs deployment/web</code></pre><div class="what">Muestra lo que imprimió el contenedor de uno de los Pods del Deployment (nginx registra cada visita). Agregá <code>-f</code> para seguir viéndolos en vivo; <kbd>Ctrl</kbd>+<kbd>C</kbd> para salir.</div></div>
+      </div>
+      <div class="card">
+        <div class="cmd"><pre><code>kubectl exec -it deployment/web -- sh</code></pre><div class="what">Abre una terminal dentro de uno de los Pods. <code>-it</code> conecta tu teclado; el <code>--</code> separa las opciones de kubectl del comando a ejecutar adentro (<code>sh</code>). Probá <code>ls</code> y salí con <code>exit</code>.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= LIMPIAR ================= -->
+  <section class="block" id="limpiar">
+    <div class="section-head">
+      <div class="num">8</div>
+      <div class="titles"><h2>Limpiar y siguientes pasos</h2></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card">
+        <div class="cmd"><pre><code>kubectl delete -f web.yaml</code></pre><div class="what">Borra todo lo que creó ese archivo (el Deployment, sus Pods y el Service).</div></div>
+        <pre class="out"><code data-lang="plain">deployment.apps "web" deleted
+service "web" deleted</code></pre>
+      </div>
+      <div class="card">
+        <ol class="steps">
+          <li><a href="01-conceptos.html"><b>Conceptos</b></a>: cómo funciona el cluster por dentro y por qué trabaja con “estado deseado”.</li>
+          <li><a href="05-de-compose-a-k8s.html"><b>De Compose a K8s</b></a>: llevar una app propia con su base de datos al cluster.</li>
+          <li><a href="02-kubectl.html"><b>kubectl</b></a>: todos los comandos, explicados.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <a href="index.html">← Inicio</a>
+    <a href="01-conceptos.html">Siguiente: Conceptos →</a>
+  </footer>
+</main>
+</body>
+</html>

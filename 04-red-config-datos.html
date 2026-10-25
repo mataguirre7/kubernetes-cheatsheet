@@ -170,9 +170,9 @@
       </div>
       <div class="card t-net">
         <h3>Probar la resolución</h3>
-        <div class="cmd"><pre><code>kubectl run tmp --rm -it --image=busybox -- nslookup monguito</code></pre><div class="what">¿El nombre resuelve a la IP del Service?</div></div>
-        <div class="cmd"><pre><code>kubectl run tmp --rm -it --image=busybox -- wget -qO- http://chanchito</code></pre><div class="what">¿El Service responde desde adentro del cluster?</div></div>
-        <div class="cmd"><pre><code>kubectl get endpoints chanchito</code></pre><div class="what">IPs de los Pods detrás del Service. Vacío = selector mal o Pods no Ready.</div></div>
+        <div class="cmd"><pre><code>kubectl run tmp --rm -it --image=busybox -- nslookup monguito</code></pre><div class="what">Crea un Pod temporal y pregunta al DNS del cluster qué IP tiene el nombre <code>monguito</code>. Si responde con una IP, el Service existe y el nombre funciona; si dice <i>can't resolve</i>, el Service no existe, tiene otro nombre o está en otro namespace (entonces el nombre es <code>monguito.&lt;namespace&gt;</code>).</div></div>
+        <div class="cmd"><pre><code>kubectl run tmp --rm -it --image=busybox -- wget -qO- http://chanchito</code></pre><div class="what">Hace una petición HTTP al Service desde adentro del cluster y muestra la respuesta. Si responde acá pero no desde tu PC, el problema está en cómo lo exponés (NodePort, port-forward, Ingress), no en la app.</div></div>
+        <div class="cmd"><pre><code>kubectl get endpoints chanchito</code></pre><div class="what">Muestra las IPs y puertos de los Pods a los que el Service manda tráfico. Si aparece <code>&lt;none&gt;</code>, el Service no encontró Pods: o el <code>selector</code> no coincide con las etiquetas de los Pods, o los Pods todavía no están <b>Ready</b>.</div></div>
       </div>
     </div>
   </section>

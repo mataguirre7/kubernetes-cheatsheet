@@ -310,7 +310,7 @@ stringData:                     # texto plano; se guarda en base64
   MONGO_PASSWORD: &lt;password&gt;</code></pre>
         <div class="cmd"><pre><code>kubectl create secret generic mongo-secret \
   --from-literal=MONGO_USER=mati \
-  --from-literal=MONGO_PASSWORD=&lt;password&gt;</code></pre><div class="what">Alternativa sin archivo: así la contraseña no queda en el repo.</div></div>
+  --from-literal=MONGO_PASSWORD=&lt;password&gt;</code></pre><div class="what">Crea el mismo Secret directamente con un comando, sin archivo YAML. Cada <code>--from-literal</code> agrega una clave con su valor. Así la contraseña no queda escrita en ningún archivo del repositorio; la contra es que hay que repetir el comando en cada cluster nuevo.</div></div>
         <div class="callout bad"><span class="ico">✕</span><p>No subas YAML de Secrets con valores reales a git: base64 <b>no es cifrado</b>.</p></div>
       </div>
     </div>
@@ -393,7 +393,7 @@ spec:
           <li><b>Gateway API</b> (<code>Gateway</code> + <code>HTTPRoute</code>) es el reemplazo moderno de Ingress; el controller <i>ingress-nginx</i> fue retirado en 2026.</li>
         </ul>
         <div class="cmd"><pre><code>kubectl get ingress
-kubectl get ingressclass</code></pre><div class="what">Ver Ingress y qué controller hay instalado.</div></div>
+kubectl get ingressclass</code></pre><div class="what">La primera línea lista los Ingress: sus hosts, rutas y la dirección asignada (si ADDRESS queda vacío, no hay un controller atendiéndolos). La segunda lista las <b>IngressClass</b>: qué Ingress controllers hay instalados. Sin ninguno, los Ingress existen pero no hacen nada.</div></div>
       </div>
     </div>
   </section>
